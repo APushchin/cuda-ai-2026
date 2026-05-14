@@ -27,6 +27,24 @@ std::vector<float> GeluOMP(const std::vector<float>& input) {
     return output;
 }
 
+#if 0
+std::vector<float> GeluOMPref(const std::vector<float>& input) {
+    size_t n = input.size();
+    std::vector<float> output(n);
+
+    constexpr float argscale = std::sqrt(2.f/M_PI);
+    const float* inptr = input.data();
+    float* outptr = output.data();
+
+    for (size_t i = 0; i < n; i++) {
+        float x = input[i];
+        float y = 0.5f*x*(1 + std::tanh(argscale*x*(1.f + 0.044715f*x*x)));
+        output[i] = y;
+    }
+
+    return output;
+}
+
 int main() {
     size_t n = 134217728u;
     std::vector<float> x(n);
@@ -36,7 +54,14 @@ int main() {
 
     // Warming-up
     auto y = GeluOMP(x);
-   
+
+    std::vector<float> yref = GeluOMPref(x);
+    float err = 0.f;
+    for (size_t i = 0; i < n; i++) {
+        err = std::max(err, std::abs(y[i] - yref[i]));
+    }
+    printf("max absolute error = %.5g\n", err);
+
     // Performance Measuring
     std::vector<double> time_list;
     for (int i = 0; i < 4; ++i) {
@@ -51,3 +76,4 @@ int main() {
 
     return 0;
 }
+#endif
