@@ -1,5 +1,6 @@
 #include "gelu_omp.h"
 #include <math.h>
+#include <stdio.h>
 #include <omp.h>
 #include <immintrin.h>
 
@@ -109,18 +110,13 @@ std::vector<float> GeluOMP(const std::vector<float>& input)
         rptr[elnum] = 0.5*x*(1.+th);
     }
 #else
-    const int threadnums = 4;
+    const int stridenums = std::min(128, siz);
     const int lanes = 8;
-    int tasks = std::max(1, siz/threadnums);
-    int stride = siz/threadnums;
-    stride -= stride%lanes;
-    stride = std::max(lanes, stride);
     #pragma omp parallel for
-    for(int tnum = 0; tnum  < threadnums; tnum++)
+    for(int tnum = 0; tnum  < stridenums; tnum++)
     {
-        int start = tnum*stride;
-        int end = (tnum+1)*stride;
-        end = std::min(end, siz);
+        int start = ((int64_t)siz * (int64_t)tnum) / (int64_t)stridenums;
+        int end = ((int64_t)siz * (int64_t)(tnum+1)) / (int64_t)stridenums;
         int elnum = start;
         __m256 v_r1 = _mm256_set1_ps(2*r1);
         __m256 v_c1 = _mm256_set1_ps(0.044715f);

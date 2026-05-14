@@ -22,7 +22,7 @@ std::vector<float> GeluOMP_ref(const std::vector<float>& input)
 int main()
 {
     omp_set_num_threads(4);
-    std::vector<float> input(1000000);
+    std::vector<float> input(134217728);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dist(-100.0, 100.0);
@@ -38,7 +38,7 @@ int main()
     
 
     std::vector<double> time_list;
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 1; ++i)
     {
         auto start = std::chrono::high_resolution_clock::now();
         std::vector<float> out = GeluOMP(input);
