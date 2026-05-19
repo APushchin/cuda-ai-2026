@@ -20,7 +20,7 @@ std::vector<float> GeluOMP(const std::vector<float>& input) {
     #pragma omp parallel for
     for (size_t i = 0; i < nElems; ++i) {
         float el = input[i];
-        output[i] = 0.5f * el * (1 + fast_tanh(M_2_SQRTPI * el (1.f +  CONST_V * el * el)));
+        output[i] = 0.5f * el * (1 + fast_tanh(M_2_SQRTPI * el * (1.f +  CONST_V * el * el)));
     }
 
     return output;
