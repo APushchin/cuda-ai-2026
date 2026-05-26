@@ -419,6 +419,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|pinegina_natalia|0.2180|7|
 |default|lukicheva_polina|0.2290|4|
 |default|chekmaryov_petr|TEST FAILED|-|
+|default|chervyakov_ivan|BUILD FAILED|-|
 
 ## 3_naive_gemm_cuda (4096 elements)
 |Group|Name|Result|Rank|
