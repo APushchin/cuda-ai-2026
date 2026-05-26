@@ -1,7 +1,7 @@
 #include "gelu_cuda.h"
 
 #include <cuda_runtime.h>
-#include <cuda/std/cmath>
+#include <cuda/cmath>
 
 // Anonymous namespace
 namespace
