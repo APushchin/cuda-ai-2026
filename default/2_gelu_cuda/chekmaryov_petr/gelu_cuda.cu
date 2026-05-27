@@ -2,15 +2,17 @@
 #include <math.h>
 #include <stdio.h>
 #include <immintrin.h>
+#include <cuda_runtime.h>
+#include <cuda/cmath>
 
-// CUDA-ядро для параллельного сложения элементов
 __global__ void geluKernel(float* res, const float* input, int n)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     float x = input[idx];
     float targ = 0.636619772368*(x+0.044715*x*x*x);
-    float th = 1 - 2. / (std::exp(2*targ)+1);
-    res[idx] = 0.5*x*(1.+th);
+    float th = 1 - 2. / (cuda::std::expf(2*targ)+1);
+    if(idx < n)
+        res[idx] = 0.5*x*(1.+th);
 }
 
 struct MemoryKeeper
@@ -21,17 +23,18 @@ struct MemoryKeeper
     int64_t memory_allocated = 0;
 } memoryKeeper;
 
-MemoryKeeper* getMemoryKeeper(int n)
+MemoryKeeper* getMemoryKeeper(int size)
 {
-    if(memoryKeeper.memory_allocated < n)
+    if(memoryKeeper.memory_allocated < size)
     {
         if(memoryKeeper.memory_allocated > 0 )
         {
             cudaFree(memoryKeeper.input_ptr);
             cudaFree(memoryKeeper.res_ptr);
         }
-        cudaMalloc(&memoryKeeper.input_ptr, n);
-        cudaMalloc(&memoryKeeper.res_ptr, n);
+        cudaMalloc(&memoryKeeper.input_ptr, size);
+        cudaMalloc(&memoryKeeper.res_ptr, size);
+        memoryKeeper.memory_allocated = size;
     }
     return &memoryKeeper;
 }
@@ -47,20 +50,19 @@ MemoryKeeper::~MemoryKeeper()
 
 std::vector<float> GeluCUDA(const std::vector<float>& input)
 {
-    int n = input.size();
-    size_t size = n * sizeof(float);
+    const int n = input.size();
+    const size_t size = n * sizeof(float);
+
+    float* input_ptr = getMemoryKeeper(size)->input_ptr;
+    float* res_ptr = getMemoryKeeper(size)->res_ptr;
+
     std::vector<float> res(n);
 
-    float* input_ptr = nullptr;
-    float* res_ptr = nullptr;
-
-    cudaMemcpy(getMemoryKeeper(n)->input_ptr, input.data(), size, cudaMemcpyHostToDevice);
+    cudaMemcpy(input_ptr, input.data(), size, cudaMemcpyHostToDevice);
 
     int threadsPerBlock = 256;
     int blocksPerGrid = (n + threadsPerBlock - 1) / threadsPerBlock;
     geluKernel<<<blocksPerGrid, threadsPerBlock>>>(res_ptr, input_ptr, n);
-
-    cudaDeviceSynchronize();
 
     cudaMemcpy(res.data(), res_ptr, size, cudaMemcpyDeviceToHost);
     

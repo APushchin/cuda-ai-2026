@@ -38,7 +38,7 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
     cudaMemcpy(devA, hostA, allocLength, cudaMemcpyHostToDevice);
 
     int blockSize, minGridSize, blocks;
-    cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, (void *)geluExpOptSingleBufferKernel, 0, length);
+    cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, (void *)geluExpSingleBufferKernel, 0, length);
     blocks = (length + blockSize - 1) / blockSize;
     geluExpSingleBufferKernel<<<blocks, blockSize>>>(devA, length);
 

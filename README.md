@@ -412,22 +412,24 @@ One may use numba or C strings to write CUDA kernels.
 |default|zvorykin_aleksandr|0.1598|8|
 |default|znamenskiy_mikhail|0.1648|6|
 |default|pisarevsky_vadim|0.1653|2|
-|default|lobanova_elizaveta|0.1680|3|
+|default|lobanova_elizaveta|0.1697|3|
+|default|chervyakov_ivan|0.1709|9|
 |default|zinoviev_vladimir|0.1751|5|
 |default|smirnov_denis|0.1757|1|
 |**REF**|**REF**|**0.1864**|**-**|
 |default|pinegina_natalia|0.2180|7|
 |default|lukicheva_polina|0.2290|4|
 |default|chekmaryov_petr|TEST FAILED|-|
-|default|chervyakov_ivan|BUILD FAILED|-|
 
 ## 3_naive_gemm_cuda (4096 elements)
 |Group|Name|Result|Rank|
 |-----|----|------|----|
 |**FAST**|**FAST**|**0.0710**|**-**|
-|default|zinoviev_vladimir|0.2528|2|
+|default|chekmaryov_petr|0.1661|3|
+|default|zinoviev_vladimir|0.1758|2|
 |default|smirnov_denis|0.2679|1|
 |**REF**|**REF**|**0.5748**|**-**|
+|default|lobanova_elizaveta|BUILD FAILED|-|
 
 ## 4_block_gemm_cuda (4096 elements)
 |Group|Name|Result|Rank|
@@ -440,6 +442,7 @@ One may use numba or C strings to write CUDA kernels.
 |Group|Name|Result|Rank|
 |-----|----|------|----|
 |**FAST**|**FAST**|**0.0388**|**-**|
+|default|smirnov_denis|0.0438|1|
 |**REF**|**REF**|**0.0467**|**-**|
 
 ## 6_softmax_cuda (8192x16384 elements)
@@ -457,17 +460,17 @@ One may use numba or C strings to write CUDA kernels.
 ## default
 |Group|Name|Passed|Score|
 |-----|----|------|-----|
-|default|chekmaryov_petr|1/7|60|
-|default|chervyakov_ivan|1/7|53|
+|default|chekmaryov_petr|2/7|122|
+|default|chervyakov_ivan|2/7|105|
 |default|lobanova_elizaveta|2/7|119|
-|default|lukicheva_polina|2/7|99|
+|default|lukicheva_polina|2/7|98|
 |default|pigasin_dmitry|1/7|48|
-|default|pinegina_natalia|2/7|97|
+|default|pinegina_natalia|2/7|96|
 |default|pisarevsky_vadim|2/7|125|
-|default|smirnov_denis|4/7|244|
+|default|smirnov_denis|5/7|306|
 |default|vikhrev_ivan|1/7|46|
 |default|zemskov_roman|0/7|0|
-|default|zinoviev_vladimir|3/7|173|
+|default|zinoviev_vladimir|3/7|171|
 |default|znamenskiy_mikhail|2/7|108|
 |default|zvorykin_aleksandr|2/7|110|
 
