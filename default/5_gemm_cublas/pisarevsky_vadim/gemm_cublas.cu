@@ -35,6 +35,8 @@ std::vector<float> GemmCUBLAS(const std::vector<float>& a,
     cudaFree(B);
     cudaFree(C);
 
+    cublasDestroy(cublas);
+
     return c;
 }
 
