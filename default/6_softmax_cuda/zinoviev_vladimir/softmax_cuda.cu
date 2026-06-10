@@ -12,8 +12,8 @@ __device__ inline void merge(float max_a, float sum_a,
                              float max_b, float sum_b,
                              volatile float& out_max, volatile float& out_sum) {
     out_max = fmaxf(max_a, max_b);
-    out_sum = sum_a * __expf(max_a - out_max) 
-            + sum_b * __expf(max_b - out_max);
+    out_sum = sum_a * expf(max_a - out_max) 
+            + sum_b * expf(max_b - out_max);
 }
 
 __global__ void SoftmaxCUDAKernel(const float* input, float* output, int col_size) {
@@ -30,11 +30,11 @@ __global__ void SoftmaxCUDAKernel(const float* input, float* output, int col_siz
         new_max = fmaxf(new_max, x.y);
         new_max = fmaxf(new_max, x.z);
         new_max = fmaxf(new_max, x.w);
-        local_sum = local_sum * __expf(local_max - new_max) +
-            __expf(x.x - new_max) +
-            __expf(x.y - new_max) +
-            __expf(x.z - new_max) +
-            __expf(x.w - new_max);
+        local_sum = local_sum * expf(local_max - new_max) +
+            expf(x.x - new_max) +
+            expf(x.y - new_max) +
+            expf(x.z - new_max) +
+            expf(x.w - new_max);
         local_max = new_max;
     }
 
