@@ -158,9 +158,9 @@ std::vector<float> GeluOMPref(const std::vector<float>& input) {
         const float* inptr = input.data();
         float* outptr = output.data();
         for (; j < j1; j++) {
-            float x = input[j];
+            float x = inptr[j];
             float y = 0.5f*x*(1 + std::tanh(argscale*x*(1.f + 0.044715f*x*x)));
-            output[j] = y;
+            outptr[j] = y;
         }
     }
 

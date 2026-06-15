@@ -86,7 +86,7 @@ std::vector<float> NaiveGemmCUDA(const std::vector<float>& a,
     return c;
 }
 
-#ifdef VP_TEST_GEMM
+#ifdef VP_RUN_TEST
 std::vector<float> LessThanNaiveGemm(const std::vector<float>& a,
                                     const std::vector<float>& b,
                                     int n_) {
@@ -96,13 +96,12 @@ std::vector<float> LessThanNaiveGemm(const std::vector<float>& a,
     #pragma omp parallel for
     for (int t = 0; t < ntiles; t++) {
         int n = n_;
-        std::vector<float> sum;
         int i0 = t*n/ntiles, i1 = (t+1)*n/ntiles;
         for (int i = i0; i < i1; i++) {
-            sum.assign(n, 0.f);
             const float* aptr = &a[i*n];
             const float* bptr = b.data();
             float* cptr = &c[i*n];
+            memset(cptr, 0, n*sizeof(cptr[0]));
 
             for (int k = 0; k < n; k++, bptr += n) {
                 float aval = a[k];

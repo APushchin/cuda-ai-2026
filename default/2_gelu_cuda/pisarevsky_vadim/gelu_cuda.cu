@@ -51,7 +51,7 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
     return output;
 }
 
-#ifdef ADD_TEST
+#ifdef VP_RUN_TEST
 static float geluRef(float x) {
     float y = 0.5f*x*(1 + std::tanh(std::sqrt(2.f/M_PI)*x*(1.f + 0.044715f*x*x)));
     return y;
