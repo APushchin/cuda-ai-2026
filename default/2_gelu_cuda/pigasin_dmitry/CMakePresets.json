@@ -1,0 +1,16 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "cuda",
+            "displayName": "cuda",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ]
+}
