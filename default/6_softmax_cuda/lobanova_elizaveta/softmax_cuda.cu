@@ -8,6 +8,7 @@
 #include <float.h>
 #include <thread>
 
+#define WARP_SIZE 32
 #define BLOCK_SIZE 256
 
 __global__ void SoftmaxCUDAKernel(float* input, int row_count, int row_size) {
@@ -17,23 +18,37 @@ __global__ void SoftmaxCUDAKernel(float* input, int row_count, int row_size) {
     }
 
     int t_id = threadIdx.x;
+    int warp_id = t_id / WARP_SIZE;
+    int lane_id = t_id % WARP_SIZE;
+    
     float* row_input_data = input + row_ix * row_size;
+
     float t_max = -INFINITY;
     for (int col = t_id; col < row_size; col += blockDim.x) {
         t_max = fmaxf(t_max, row_input_data[col]);
     }
 
-    extern __shared__ float shared_mem[];
-    for (int offset = BLOCK_SIZE / 2; offset > 0; offset /= 2) {
+    for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
         t_max = fmaxf(t_max, __shfl_down_sync(0xFFFFFFFF, t_max, offset));
     }
 
-    if (t_id == 0) {
-        shared_mem[t_id] = t_max;
+    __shared__ float shared_mem[WARP_SIZE]; 
+    if (lane_id == 0) {
+        shared_mem[warp_id] = t_max;
     }
-     __syncthreads();
+    __syncthreads();
 
-    float global_max = shared_mem[0];
+    float global_max = (t_id < (blockDim.x / WARP_SIZE)) ? shared_mem[lane_id] : -INFINITY;
+    if (warp_id == 0) {
+        for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
+            global_max = fmaxf(global_max, __shfl_down_sync(0xFFFFFFFF, global_max, offset));
+        }
+        if (t_id == 0) {
+            shared_mem[0] = global_max;
+        }
+    }
+    __syncthreads();
+    global_max = shared_mem[0];
 
     float t_sum = 0.0f;
     for (int col = t_id; col < row_size; col += blockDim.x) {
@@ -42,14 +57,26 @@ __global__ void SoftmaxCUDAKernel(float* input, int row_count, int row_size) {
         t_sum += exp_val;
     }
 
-    for (int offset = BLOCK_SIZE / 2; offset > 0; offset /= 2) {
+    for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
         t_sum += __shfl_down_sync(0xFFFFFFFF, t_sum, offset);
     }
-    if (t_id == 0) {
-        shared_mem[t_id] = t_sum;
+
+    if (lane_id == 0) {
+        shared_mem[warp_id] = t_sum;
     }
     __syncthreads();
 
+    float global_sum = (t_id < (blockDim.x / WARP_SIZE)) ? shared_mem[lane_id] : 0.0f;
+    if (warp_id == 0) {
+        for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
+            global_sum += __shfl_down_sync(0xFFFFFFFF, global_sum, offset);
+        }
+        if (t_id == 0) {
+            shared_mem[0] = global_sum;
+        }
+    }
+    __syncthreads();
+    
     float k = 1.0f / shared_mem[0];
     for (int col = t_id; col < row_size; col += blockDim.x) {
         row_input_data[col] *= k;
@@ -73,7 +100,7 @@ std::vector<float> SoftmaxCUDA(const std::vector<float>& input, int row_count) {
 
     cudaMemcpyAsync(devInput, input_data, data_size * sizeof(float), cudaMemcpyHostToDevice, stream);
 
-    SoftmaxCUDAKernel<<<row_count, BLOCK_SIZE, BLOCK_SIZE * sizeof(float), stream>>>(devInput, row_count, row_size);
+    SoftmaxCUDAKernel<<<row_count, BLOCK_SIZE, 0, stream>>>(devInput, row_count, row_size);
 
     t.join();
     cudaMemcpyAsync(output.data(), devInput, data_size * sizeof(float), cudaMemcpyDeviceToHost, stream);
