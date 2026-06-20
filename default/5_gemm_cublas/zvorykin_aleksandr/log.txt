@@ -1,53 +1,13 @@
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(9): error: identifier "cublasHandle_t" is undefined
-      cublasHandle_t handle;
-      ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(11): error: identifier "cublasCreate" is undefined
-      cublasCreate(&handle);
-      ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(13): error: identifier "cublasSetStream" is undefined
-      cublasSetStream(handle, stream);
-      ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(14): error: identifier "CUBLAS_TENSOR_OP_MATH" is undefined
-      cublasSetMathMode(handle, CUBLAS_TENSOR_OP_MATH);
-                                ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(14): error: identifier "cublasSetMathMode" is undefined
-      cublasSetMathMode(handle, CUBLAS_TENSOR_OP_MATH);
-      ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(30): error: namespace "std" has no member "memcpy"
+/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(33): error: namespace "std" has no member "memcpy"
       std::memcpy(h_A, a.data(), dataSize);
            ^
 
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(31): error: namespace "std" has no member "memcpy"
+/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(34): error: namespace "std" has no member "memcpy"
       std::memcpy(h_B, b.data(), dataSize);
            ^
 
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(40): error: identifier "CUBLAS_OP_N" is undefined
-                   CUBLAS_OP_N, CUBLAS_OP_N,
-                   ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(47): error: identifier "CUBLAS_COMPUTE_32F_FAST_TF32" is undefined
-                   CUBLAS_COMPUTE_32F_FAST_TF32,
-                   ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(48): error: identifier "CUBLAS_GEMM_DEFAULT_TENSOR_OP" is undefined
-                   CUBLAS_GEMM_DEFAULT_TENSOR_OP);
-                   ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(39): error: identifier "cublasGemmEx" is undefined
-      cublasGemmEx(handle,
-      ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(54): error: namespace "std" has no member "memcpy"
+/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(57): error: namespace "std" has no member "memcpy"
       std::memcpy(c.data(), h_C, dataSize);
            ^
 
-/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu(65): error: identifier "cublasDestroy" is undefined
-      cublasDestroy(handle);
-      ^
-
-13 errors detected in the compilation of "/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu".
+3 errors detected in the compilation of "/home/crazyproger/sandbox/cuda-ai-2026/default/5_gemm_cublas/zvorykin_aleksandr/gemm_cublas.cu".
