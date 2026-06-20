@@ -1,5 +1,8 @@
 #include "gemm_cublas.h"
 
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
 std::vector<float> GemmCUBLAS(const std::vector<float>& a,
                               const std::vector<float>& b,
                               int n)
