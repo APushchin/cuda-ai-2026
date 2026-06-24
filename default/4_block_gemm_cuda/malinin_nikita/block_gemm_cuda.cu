@@ -20,7 +20,7 @@ __global__ void BlockGemmCUDAImpl(const float *a, const float *b, float *c, int 
 
     for (int block = 0; block < gridDim.x; ++block) {
         blockA[blockAB] = a[y * n + block * blockSize + t_x];
-        blockB[blockAB] = b[(block * blockSize * t_y) * n + x];
+        blockB[blockAB] = b[(block * blockSize + t_y) * n + x];
         __syncthreads();
     }
 
