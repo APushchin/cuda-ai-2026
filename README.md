@@ -493,6 +493,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|ermilov_dmitry|0.1209|13|
 |default|zinoviev_vladimir|0.1237|2|
 |default|lobanova_elizaveta|0.1244|3|
+|default|malinin_nikita|0.1250|21|
 |default|zlobin_george|0.1267|14|
 |default|vikhrev_ivan|0.1270|11|
 |default|pigasin_dmitry|0.1279|12|
@@ -510,7 +511,6 @@ One may use numba or C strings to write CUDA kernels.
 |default|novozhilov_mikhail|0.1797|16|
 |**REF**|**REF**|**0.2981**|**-**|
 |default|zvorykin_aleksandr|TEST FAILED|-|
-|default|malinin_nikita|TEST FAILED|-|
 |default|putilin_artyom|TEST FAILED|-|
 
 ## 5_gemm_cublas (4096 elements)
@@ -582,38 +582,38 @@ One may use numba or C strings to write CUDA kernels.
 |Group|Name|Passed|Score|
 |-----|----|------|-----|
 |default|belov_dmitry|1/7|40|
-|default|bolshakova_viktoriya|5/7|136|
-|default|chekmaryov_petr|**7/7**|**326**|
-|default|chervyakov_ivan|**7/7**|**314**|
+|default|bolshakova_viktoriya|5/7|135|
+|default|chekmaryov_petr|**7/7**|**325**|
+|default|chervyakov_ivan|**7/7**|**313**|
 |default|ermilov_dmitry|**7/7**|**314**|
 |default|kireev_daniil|0/7|0|
-|default|korobeynikov_aleksey|4/7|140|
-|default|kozlov_mikhail|6/7|242|
+|default|korobeynikov_aleksey|4/7|139|
+|default|kozlov_mikhail|6/7|241|
 |default|kryukov_dmitry|2/7|62|
 |default|lobanova_elizaveta|**7/7**|**396**|
-|default|lukicheva_polina|4/7|129|
-|default|malinin_nikita|6/7|239|
-|default|novozhilov_mikhail|4/7|134|
-|default|pigasin_dmitry|**7/7**|**326**|
-|default|pinegina_natalia|**7/7**|**304**|
+|default|lukicheva_polina|4/7|128|
+|default|malinin_nikita|**7/7**|**278**|
+|default|novozhilov_mikhail|4/7|133|
+|default|pigasin_dmitry|**7/7**|**325**|
+|default|pinegina_natalia|**7/7**|**303**|
 |default|pisarevsky_vadim|6/7|333|
 |default|pushchin_alexey|0/7|0|
 |default|putilin_artyom|3/7|82|
-|default|rodygin_vadim|3/7|115|
-|default|salnikov_nikolay|4/7|133|
-|default|smirnov_denis|**7/7**|**381**|
+|default|rodygin_vadim|3/7|114|
+|default|salnikov_nikolay|4/7|132|
+|default|smirnov_denis|**7/7**|**380**|
 |default|suchkov_vladislav|3/7|69|
-|default|vikhrev_ivan|5/7|230|
+|default|vikhrev_ivan|5/7|229|
 |default|volkovskiy_pavel|2/7|59|
 |default|zemskov_roman|**7/7**|**355**|
 |default|zinoviev_vladimir|**7/7**|**408**|
-|default|zlobin_george|**7/7**|**277**|
-|default|znamenskiy_mikhail|**7/7**|**342**|
+|default|zlobin_george|**7/7**|**276**|
+|default|znamenskiy_mikhail|**7/7**|**341**|
 |default|zvorykin_aleksandr|5/7|228|
 
-Passed: 11
+Passed: 12
 
-**Total Passed: 11**
+**Total Passed: 12**
 
 ---
 *Maximum Score: 448 (64 per task)*
