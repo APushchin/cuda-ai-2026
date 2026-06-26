@@ -15,9 +15,7 @@ float geluf_opt(float x)
     return x * ((exp2x) / (exp2x + 1));
 }
 
-// todo use duff device
 void geluf_array(const float* in, float* out, std::size_t count) {
-    #pragma GCC unroll 8
     for (std::size_t i = 0; i < count; ++i) {
         *out++ = geluf_opt(*in++);
     }
@@ -112,44 +110,62 @@ __m256  pow2n = _mm256_castsi256_ps(imm0);
 }
 } // namespace
 
-
 std::vector<float> GeluOMP(const std::vector<float>& input) {
-    std::vector<float> result(input.size(), 0);
+    const std::size_t length = input.size();
+    std::vector<float> result(length, 0);
 
-    __m256 vC1 = _mm256_set1_ps(C1);
-    __m256 vC2 = _mm256_set1_ps(C2);
+    uintptr_t input_misalign = (32 - ((const uintptr_t)input.data() & 31)) % 32;
+    size_t head = input_misalign / sizeof(float);
 
-    __m256 vone = _mm256_set1_ps(1.0f);
+    size_t result_misalignment = 32 - ((const uintptr_t)(result.data() + head) & 31);
+    bool is_result_aligned = (result_misalignment == 0 || result_misalignment == 32);
 
+    if (head >= length) {
+        geluf_array(&input[0], &result[0], length);
+    } else {
+        geluf_array(&input[0], &result[0], head);
 
-    uintptr_t misalign = (const uintptr_t)input.data() % 32;
-    size_t head = misalign / sizeof(float);
+        const std::size_t tail_size = (length - head) % 8;
+        const std::size_t tail = length - tail_size;
 
-    geluf_array(&input[0], &result[0], head);
+        __m256 vC1 = _mm256_set1_ps(C1);
+        __m256 vC2 = _mm256_set1_ps(C2);
+        __m256 vone = _mm256_set1_ps(1.0f);
 
-    const size_t unroll_factor = 4;
-    #pragma omp parallel for simd
-    for (std::size_t i = head; i < input.size(); i += 8 * unroll_factor) {
-        #pragma GCC unroll(4)
-        for (std::size_t j = i; j < i + 8 * unroll_factor; j += 8) {
-            __m256 vx = _mm256_load_ps(&input[j]);
-            // exp(C1 + C2 * x * x) * x;
-            __m256 vx2 = _mm256_mul_ps(vx, vx);
-            __m256 vx2ss = _mm256_fmadd_ps(vC2, vx2, vC1);
-            __m256 exparg = _mm256_mul_ps(vx2ss, vx);
-            __m256 vexp2x = exp256_ps(exparg);
-            // x * (exp2x / (exp2x + 1));
-            __m256 vexp2xplus1 = _mm256_add_ps(vexp2x, vone);
-            __m256 vdivres = _mm256_div_ps(vexp2x, vexp2xplus1);
-            __m256 vres = _mm256_mul_ps(vdivres, vx);
-            // result[i] = res;
-            _mm256_stream_ps(&result[j], vres);
+       if (is_result_aligned) {
+            #pragma omp parallel for simd
+            for (std::size_t i = head; i < tail; i += 8) {
+                __m256 vx = _mm256_load_ps(&input[i]);
+                // exp(C1 + C2 * x * x) * x;
+                __m256 vx2 = _mm256_mul_ps(vx, vx);
+                __m256 vx2ss = _mm256_fmadd_ps(vC2, vx2, vC1);
+                __m256 exparg = _mm256_mul_ps(vx2ss, vx);
+                __m256 vexp2x = exp256_ps(exparg);
+                // x * (exp2x / (exp2x + 1));
+                __m256 vexp2xplus1 = _mm256_add_ps(vexp2x, vone);
+                __m256 vdivres = _mm256_div_ps(vexp2x, vexp2xplus1);
+                __m256 vres = _mm256_mul_ps(vdivres, vx);
+                _mm256_stream_ps(&result[i], vres);
+            }
+        } else {
+            #pragma omp parallel for simd
+            for (std::size_t i = head; i < tail; i += 8) {
+                __m256 vx = _mm256_load_ps(&input[i]);
+                // exp(C1 + C2 * x * x) * x;
+                __m256 vx2 = _mm256_mul_ps(vx, vx);
+                __m256 vx2ss = _mm256_fmadd_ps(vC2, vx2, vC1);
+                __m256 exparg = _mm256_mul_ps(vx2ss, vx);
+                __m256 vexp2x = exp256_ps(exparg);
+                // x * (exp2x / (exp2x + 1));
+                __m256 vexp2xplus1 = _mm256_add_ps(vexp2x, vone);
+                __m256 vdivres = _mm256_div_ps(vexp2x, vexp2xplus1);
+                __m256 vres = _mm256_mul_ps(vdivres, vx);
+                _mm256_storeu_ps(&result[i], vres);
+            }
         }
-    }
 
-    const size_t tail = input.size() % 7;
-    const size_t tail_idx = input.size() - tail;
-    geluf_array(&input[tail_idx], &result[tail_idx], tail);
+        geluf_array(&input[tail], &result[tail], tail_size);
+    }
 
     return result;
 }
