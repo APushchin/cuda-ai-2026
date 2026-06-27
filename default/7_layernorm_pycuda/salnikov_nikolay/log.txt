@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/crazyproger/sandbox/./main.py", line 115, in <module>
+    main()
+  File "/home/crazyproger/sandbox/./main.py", line 102, in main
+    result_flat = layernorm_pycuda(input_data, gamma, beta, row_size)
+  File "/home/crazyproger/sandbox/layernorm_pycuda.py", line 96, in layernorm_pycuda
+    output = gpuarray.empty_like(input)
+  File "/home/crazyproger/.local/lib/python3.10/site-packages/pycuda/gpuarray.py", line 1349, in empty_like
+    other_ary.shape, dtype, other_ary.allocator, order=order, strides=strides
+AttributeError: 'numpy.ndarray' object has no attribute 'allocator'

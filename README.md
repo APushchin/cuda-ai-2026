@@ -551,6 +551,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|malinin_nikita|0.1698|14|
 |default|smirnov_denis|0.1727|1|
 |default|pisarevsky_vadim|0.1736|5|
+|default|salnikov_nikolay|0.1750|16|
 |default|zvorykin_aleksandr|0.1799|12|
 |default|znamenskiy_mikhail|0.1810|3|
 |default|zlobin_george|0.1812|10|
@@ -578,6 +579,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|znamenskiy_mikhail|0.2180|7|
 |default|malinin_nikita|0.2580|12|
 |default|bolshakova_viktoriya|TEST FAILED|-|
+|default|salnikov_nikolay|RUN FAILED|-|
 
 # Tasks Done
 ## default
@@ -585,7 +587,7 @@ One may use numba or C strings to write CUDA kernels.
 |-----|----|------|-----|
 |default|belov_dmitry|1/7|40|
 |default|bolshakova_viktoriya|5/7|133|
-|default|chekmaryov_petr|**7/7**|**323**|
+|default|chekmaryov_petr|**7/7**|**322**|
 |default|chervyakov_ivan|**7/7**|**309**|
 |default|ermilov_dmitry|**7/7**|**312**|
 |default|kireev_daniil|0/7|0|
@@ -597,21 +599,21 @@ One may use numba or C strings to write CUDA kernels.
 |default|malinin_nikita|**7/7**|**275**|
 |default|novozhilov_mikhail|4/7|132|
 |default|pigasin_dmitry|**7/7**|**323**|
-|default|pinegina_natalia|**7/7**|**300**|
+|default|pinegina_natalia|**7/7**|**299**|
 |default|pisarevsky_vadim|6/7|333|
 |default|pushchin_alexey|0/7|0|
 |default|putilin_artyom|4/7|110|
 |default|rodygin_vadim|3/7|113|
-|default|salnikov_nikolay|5/7|170|
+|default|salnikov_nikolay|6/7|209|
 |default|smirnov_denis|**7/7**|**377**|
 |default|suchkov_vladislav|3/7|69|
 |default|vikhrev_ivan|5/7|228|
 |default|volkovskiy_pavel|2/7|59|
 |default|zemskov_roman|**7/7**|**353**|
 |default|zinoviev_vladimir|**7/7**|**408**|
-|default|zlobin_george|**7/7**|**274**|
-|default|znamenskiy_mikhail|**7/7**|**338**|
-|default|zvorykin_aleksandr|6/7|277|
+|default|zlobin_george|**7/7**|**273**|
+|default|znamenskiy_mikhail|**7/7**|**337**|
+|default|zvorykin_aleksandr|6/7|276|
 
 Passed: 13
 
