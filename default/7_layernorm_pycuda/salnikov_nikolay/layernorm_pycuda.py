@@ -1,111 +1,160 @@
 import numpy as np
 import pycuda.autoinit
 import pycuda.driver as cuda
-import pycuda.gpuarray as gpuarray
 from pycuda.compiler import SourceModule
 
-LAYERNORM_KERNEL = """
-#define FINAL_MASK 0xffffffff
-
-__inline__ __device__ float warpReduceSum(float val)
+layernorm_kernel = """
+__global__ void layernorm_kernel(const float* input, float* output, const float* gamma, const float* beta, int m, int n, float eps) 
 {
-    for (int offset = 16; offset > 0; offset /= 2) 
-        val += __shfl_down_sync(FINAL_MASK, val, offset);
-    return val;
-}
+    int row = blockIdx.x;
+    if (row >= m) return;
 
-__inline__ __device__ float blockReduceSum(float val)
-{
-    __shared__ float shared[32]; 
-    int lane = threadIdx.x % warpSize;
-    int wid = threadIdx.x / warpSize;
+    int tId = threadIdx.x;
+    int bSize = blockDim.x;
 
-    val = warpReduceSum(val);
+    const float* row_in = input + (row * n);
+    float* row_out = output + (row * n);
 
-    if (lane == 0) shared[wid] = val;
-    __syncthreads(); 
+    float sum = 0.0f;
+    float sqSum = 0.0f;
 
-    val = (threadIdx.x < (blockDim.x + warpSize - 1) / warpSize) ? shared[lane] : 0.0f;
-
-    if (wid == 0) val = warpReduceSum(val);
-
-    return val;
-}
-
-__global__ void layernorm_kernel(float* input, float* output, float* gamma, float* beta, int row_size, float eps)
-{
-    int row_idx = blockIdx.x;
-    int tid = threadIdx.x;
-    int block_dim = blockDim.x;
+    const float4* row_in_vec = reinterpret_cast<const float4*>(row_in);
+    int n_vec = n / 4;
     
-    float* row_ptr = input + row_idx * row_size;
-    float* out_ptr = output + row_idx * row_size;
-    
+    for (int j = tId; j < n_vec; j += bSize)
+    {
+        float4 val = row_in_vec[j];
+        
+        sum += val.x + val.y + val.z + val.w;
+        
+        sqSum += (val.x * val.x) + 
+                 (val.y * val.y) + 
+                 (val.z * val.z) + 
+                 (val.w * val.w);
+    }
+
+    unsigned int mask = 0xffffffff;
+    for (int offset = 16; offset > 0; offset /= 2)
+    {
+        sum += __shfl_down_sync(mask, sum, offset);
+        sqSum += __shfl_down_sync(mask, sqSum, offset);
+    }
+
+    __shared__ float s_sum[32];
+    __shared__ float s_sqSum[32];
+
+    int lane = tId % 32;
+    int wid = tId / 32;
+
+    if (lane == 0)
+    {
+        s_sum[wid] = sum;
+        s_sqSum[wid] = sqSum;
+    }
+    __syncthreads();
+
+    sum = (tId < (bSize / 32)) ? s_sum[lane] : 0.0f;
+    sqSum = (tId < (bSize / 32)) ? s_sqSum[lane] : 0.0f;
+
+    if (wid == 0)
+    {
+        for (int offset = 16; offset > 0; offset /= 2)
+        {
+            sum += __shfl_down_sync(mask, sum, offset);
+            sqSum += __shfl_down_sync(mask, sqSum, offset);
+        }
+    }
+
     __shared__ float s_mean;
     __shared__ float s_inv_std;
-    
-    double sum = 0.0;
-    for (int i = tid; i < row_size; i += block_dim)
+
+    if (tId == 0)
     {
-        sum += (double)row_ptr[i];
+        float mean = sum / n;
+        float var = fmaxf(0.0f, (sqSum / n) - (mean * mean)); 
+        s_mean = mean;
+        s_inv_std = rsqrtf(var + eps);
+    }
+    __syncthreads();
+
+    float mean = s_mean;
+    float inv_std = s_inv_std;
+
+    float4* row_out_vec = reinterpret_cast<float4*>(row_out);
+    const float4* gamma_vec = reinterpret_cast<const float4*>(gamma);
+    const float4* beta_vec = reinterpret_cast<const float4*>(beta);
+
+    for (int j = tId; j < n_vec; j += bSize)
+    {
+        float4 val = row_in_vec[j];
+        float4 g = gamma_vec[j];
+        float4 b = beta_vec[j];
+        float4 out;
+    
+        out.x = g.x * inv_std * (val.x - mean) + b.x;
+        out.y = g.y * inv_std * (val.y - mean) + b.y;
+        out.z = g.z * inv_std * (val.z - mean) + b.z;
+        out.w = g.w * inv_std * (val.w - mean) + b.w;
+    
+        row_out_vec[j] = out;
     }
     
-    float block_sum = blockReduceSum((float)sum);
-    
-    if (tid == 0)
-    {
-        s_mean = block_sum / row_size;
-    }
-    __syncthreads(); 
-    
-    double var_sum = 0.0;
-    float local_mean = s_mean; 
-    
-    for (int i = tid; i < row_size; i += block_dim)
-    {
-        float diff = row_ptr[i] - local_mean;
-        var_sum += (double)(diff * diff);
-    }
-    
-    float block_var_sum = blockReduceSum((float)var_sum);
-    
-    if (tid == 0)
-    {
-        float var = block_var_sum / row_size;
-        s_inv_std = rsqrtf(var + eps); 
-    }
-    __syncthreads(); 
-    
-    float local_inv_std = s_inv_std; 
-    
-    for (int i = tid; i < row_size; i += block_dim)
-    {
-        out_ptr[i] = ((row_ptr[i] - local_mean) * local_inv_std) * gamma[i] + beta[i];
-    }
 }
 """
 
-module = SourceModule(LAYERNORM_KERNEL)
-layernorm_gpu = module.get_function("layernorm_kernel")
+class LayernormStorage:
+    def __init__(self):
+        self.input_gpu = None
+        self.output_gpu = None
+        self.gamma_gpu = None
+        self.beta_gpu = None
+        self.output_cpu = None
+        self.input_alloc_bytes = 0
+        self.param_alloc_bytes = 0
+
+    def allocate(self, input_len, input_size_bytes, param_size_bytes):
+        if input_size_bytes > self.input_alloc_bytes:
+            if self.input_gpu is not None:
+                self.input_gpu.free()
+                self.output_gpu.free()
+            self.input_gpu = cuda.mem_alloc(input_size_bytes)
+            self.output_gpu = cuda.mem_alloc(input_size_bytes)
+            self.output_cpu = np.empty(input_len, dtype=np.float32)
+            self.input_alloc_bytes = input_size_bytes
+
+        if param_size_bytes > self.param_alloc_bytes:
+            if self.gamma_gpu is not None:
+                self.gamma_gpu.free()
+                self.beta_gpu.free()
+            self.gamma_gpu = cuda.mem_alloc(param_size_bytes)
+            self.beta_gpu = cuda.mem_alloc(param_size_bytes)
+            self.param_alloc_bytes = param_size_bytes
+
+module = SourceModule(layernorm_kernel, options=["-O3", "-use_fast_math"])
+kernel = module.get_function("layernorm_kernel")
+
+storage = LayernormStorage()
 
 def layernorm_pycuda(input, gamma, beta, row_size, eps=1e-5):
-        
-    num_elements = input.size
-    num_rows = num_elements // row_size
-    
-    output = gpuarray.empty_like(input)
-    
-    threads_per_block = min(row_size, 1024)
-    threads_per_block = int(np.ceil(threads_per_block / 32.0) * 32)
-    if threads_per_block == 0: threads_per_block = 32
 
-    grid_size = (num_rows, 1, 1)
+    input_cpu = np.ascontiguousarray(input, dtype=np.float32)
+    gamma_cpu = np.ascontiguousarray(gamma, dtype=np.float32)
+    beta_cpu = np.ascontiguousarray(beta, dtype=np.float32)
+  
+    m = input_cpu.size // row_size
+    n = row_size
+
+    storage.allocate(input_cpu.size, input_cpu.nbytes, gamma_cpu.nbytes)
     
-    layernorm_gpu(
-        input, output, gamma, beta,
-        np.int32(row_size), np.float32(eps),
-        block=(threads_per_block, 1, 1),
-        grid=grid_size
-    )
+    cuda.memcpy_htod(storage.input_gpu, input_cpu)
+    cuda.memcpy_htod(storage.gamma_gpu, gamma_cpu)
+    cuda.memcpy_htod(storage.beta_gpu, beta_cpu)
+  
+    block_dim = 256
+    kernel(storage.input_gpu, storage.output_gpu, storage.gamma_gpu, storage.beta_gpu, np.int32(m), np.int32(n), np.float32(eps), block=(block_dim, 1, 1), grid=(m, 1, 1), shared=2048)
+
+    cuda.memcpy_dtoh(storage.output_cpu, storage.output_gpu)
     
-    return output
+    return storage.output_cpu
+
+
