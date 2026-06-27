@@ -9,7 +9,7 @@ sudo apt install nvidia-cuda-toolkit
 ### Build
 
 ```
-nvcc main.cu softmax_cuda.cu -o softmax_cuda
+nvcc -O3 -arch=sm_120 softmax_cuda.cu -o softmax
 ```
 
 
