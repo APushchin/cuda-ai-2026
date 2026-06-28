@@ -5,34 +5,35 @@
 
 __global__ void gemm_kernel(const float* in_a, float* in_b, float* out, size_t n)
 {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int idy = blockIdx.y * blockDim.y + threadIdx.y;
-
-    // todo cache data
-
-    if (idx < n && idy < n) {
-        int i = idx;
-        float * c_i_row = out + i * n;
-        for (size_t k = 0; k < n; ++k) {
-            const float * b_k_row = in_b + k * n;
-            float a_i_k = in_a[i * n + k];
-            int j = idy;
-            c_i_row[j] += a_i_k * b_k_row[j];
-        }
+    const int j = blockIdx.x * blockDim.x + threadIdx.x;
+    const int i = blockIdx.y * blockDim.y + threadIdx.y;
+    if (i < n && j < n) {
+        float sum = 0.0f;
+        for (size_t k = 0; k < n; ++k)
+            sum += in_a[i * n + k] * in_b[k * n + j];
+        out[i * n  + j] = sum;
     }
 }
-
 
 std::vector<float> NaiveGemmCUDA(const std::vector<float>& a,
                                  const std::vector<float>& b,
                                  int n)
 {
-    dim3 threadsPerBlock(16, 16);
-    dim3 numBlocks((n + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                   (n + threadsPerBlock.y - 1) / threadsPerBlock.y);
+    const std::size_t memsize = a.size() * sizeof(float);
 
+    static int minGridSize = 0;
+    static int maxBlockSize = 0;
+    static bool isBlockSizeComputed = false;
+    if (!isBlockSizeComputed) {
+        isBlockSizeComputed = true;
+        cudaOccupancyMaxPotentialBlockSize(&minGridSize, &maxBlockSize, gemm_kernel);
+    }
 
-    const size_t memsize = a.size() * sizeof(float) ;
+    dim3 threadsPerBlock(32, maxBlockSize / 32);
+
+    dim3 numBlocks(cuda::ceil_div((unsigned)n, threadsPerBlock.x),
+                   cuda::ceil_div((unsigned)n, threadsPerBlock.y));
+
     float *in_a = nullptr;
     float *in_b = nullptr;
     float *out = nullptr;
@@ -41,7 +42,6 @@ std::vector<float> NaiveGemmCUDA(const std::vector<float>& a,
     cudaMalloc((void**)&in_b, memsize);
     cudaMalloc((void**)&out, memsize);
 
-    // Straightforward approach
     cudaMemcpy(in_a, a.data(), memsize, cudaMemcpyHostToDevice);
     cudaMemcpy(in_b, b.data(), memsize, cudaMemcpyHostToDevice);
 
@@ -49,7 +49,7 @@ std::vector<float> NaiveGemmCUDA(const std::vector<float>& a,
 
     std::vector<float> result(a.size());
 
-    cudaMemcpy(result.data(), out, memsize, cudaMemcpyDeviceToHost); 
+    cudaMemcpy(result.data(), out, memsize, cudaMemcpyDeviceToHost);
 
     cudaFree(in_a);
     cudaFree(in_b);
