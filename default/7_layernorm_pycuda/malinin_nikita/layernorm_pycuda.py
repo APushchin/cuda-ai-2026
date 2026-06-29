@@ -66,9 +66,9 @@ mod = SourceModule(KERNEL_CODE)
 layernorm_kernel = mod.get_function("layernorm_kernel")
 
 def layernorm_pycuda(input, gamma, beta, row_size, eps=1e-5):
-    input = np.array(input, dtype=np.float32)
-    gamma = np.array(gamma, dtype=np.float32)
-    beta = np.array(beta, dtype=np.float32)
+    input = np.asarray(input, dtype=np.float32)
+    gamma = np.asarray(gamma, dtype=np.float32)
+    beta = np.asarray(beta, dtype=np.float32)
     
     size = input.size
     rows = size // row_size
