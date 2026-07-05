@@ -22,32 +22,35 @@ std::vector<float> NaiveGemmCUDA(const std::vector<float>& a,
                                  const std::vector<float>& b,
                                  int n) 
 {
-    const int sizeMtx = static_cast<int>(a.size());
-    const size_t bitSizeMtx = sizeMtx * sizeof(float);
+    const int mtxNumEl = static_cast<int>(a.size());
+    const size_t bitMtxNumEl = mtxNumEl * sizeof(float);
 
     float *deviceMtxA = nullptr;
-    cudaMalloc(&deviceMtxA, bitSizeMtx);
-    cudaMemcpy(deviceMtxA, a.data(), bitSizeMtx, cudaMemcpyHostToDevice);
+    cudaMalloc(&deviceMtxA, bitMtxNumEl);
+    cudaMemcpy(deviceMtxA, a.data(), bitMtxNumEl, cudaMemcpyHostToDevice);
 
     float *deviceMtxB = nullptr;
-    cudaMalloc(&deviceMtxB, bitSizeMtx);
-    cudaMemcpy(deviceMtxB, b.data(), bitSizeMtx, cudaMemcpyHostToDevice);
+    cudaMalloc(&deviceMtxB, bitMtxNumEl);
+    cudaMemcpy(deviceMtxB, b.data(), bitMtxNumEl, cudaMemcpyHostToDevice);
 
     float *deviceMtxC = nullptr;
-    cudaMalloc(&deviceMtxC, bitSizeMtx);
+    cudaMalloc(&deviceMtxC, bitMtxNumEl);
 
     const size_t numThreads = 16;
     dim3 threadsPerBlock(numThreads, numThreads);
-    const size_t numBlocks = (sizeMtx + numThreads - 1) / numThreads;
+    const size_t numBlocks = (n + numThreads - 1) / numThreads;
     dim3 blockCount(numBlocks, numBlocks);
+
     naiveGennFunc<<<blockCount, threadsPerBlock>>>(deviceMtxA, deviceMtxB, deviceMtxC, n);
+    
+    cudaDeviceSynchronize();
 
-    std::vector<float> output(sizeMtx);
-    cudaMemcpy(output.data(), deviceMtxC, bitSizeMtx, cudaMemcpyDeviceToHost);
+    std::vector<float> output(mtxNumEl);
+    cudaMemcpy(output.data(), deviceMtxC, bitMtxNumEl, cudaMemcpyDeviceToHost);
 
-    cudaFree(deviceMtxC);
-    cudaFree(deviceMtxB);
     cudaFree(deviceMtxA);
+    cudaFree(deviceMtxB);
+    cudaFree(deviceMtxC);
 
     return output;
 }

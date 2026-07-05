@@ -59,16 +59,19 @@ std::vector<float> BlockGemmCUDA(const std::vector<float>& a,
     const size_t numMtxElInBlock = numThreads*numThreads;
     const size_t bitMtxNumElNumMtxElInBlock = numMtxElInBlock * sizeof(float);
     dim3 threadsPerBlock(numThreads, numThreads);
-    const size_t numBlocks = (mtxNumEl + numThreads - 1) / numThreads;
+    const size_t numBlocks = (n + numThreads - 1) / numThreads;
     dim3 blockCount(numBlocks, numBlocks);
+
     blockGennFunc<<<blockCount, threadsPerBlock, bitMtxNumElNumMtxElInBlock>>>(deviceMtxA, deviceMtxB, deviceMtxC, n, numThreads);
+    
+    cudaDeviceSynchronize();
 
     std::vector<float> output(mtxNumEl);
     cudaMemcpy(output.data(), deviceMtxC, bitMtxNumEl, cudaMemcpyDeviceToHost);
 
-    cudaFree(deviceMtxC);
-    cudaFree(deviceMtxB);
     cudaFree(deviceMtxA);
+    cudaFree(deviceMtxB);
+    cudaFree(deviceMtxC);
 
     return output;
 }
