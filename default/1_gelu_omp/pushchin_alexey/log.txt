@@ -1,1 +1,3 @@
-Incorrect results, test input_100_100.bin, difference 0.22734405614143677
+/usr/bin/ld: /tmp/ccLJFHjH.o: in function `main':
+main.cpp:(.text.startup+0x0): multiple definition of `main'; /tmp/ccgxQCpF.o:gelu_omp.cpp:(.text.startup+0x0): first defined here
+collect2: error: ld returned 1 exit status
