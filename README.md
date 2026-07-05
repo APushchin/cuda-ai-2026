@@ -601,6 +601,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|ermilov_dmitry|0.1890|10|
 |default|pinegina_natalia|0.1930|6|
 |**REF**|**REF**|**0.1930**|**-**|
+|default|korobeynikov_aleksey|0.1950|21|
 |default|smirnov_denis|0.2060|1|
 |default|lobanova_elizaveta|0.2060|4|
 |default|volkovskiy_pavel|0.2060|19|
@@ -619,37 +620,37 @@ One may use numba or C strings to write CUDA kernels.
 |-----|----|------|-----|
 |default|belov_dmitry|2/7|70|
 |default|bolshakova_viktoriya|5/7|123|
-|default|chekmaryov_petr|**7/7**|**307**|
+|default|chekmaryov_petr|**7/7**|**306**|
 |default|chervyakov_ivan|**7/7**|**292**|
 |default|ermilov_dmitry|**7/7**|**306**|
 |default|kireev_daniil|0/7|0|
-|default|korobeynikov_aleksey|6/7|184|
+|default|korobeynikov_aleksey|**7/7**|**217**|
 |default|kozlov_mikhail|**7/7**|**283**|
-|default|kryukov_dmitry|**7/7**|**233**|
-|default|lobanova_elizaveta|**7/7**|**386**|
+|default|kryukov_dmitry|**7/7**|**232**|
+|default|lobanova_elizaveta|**7/7**|**385**|
 |default|lukicheva_polina|5/7|142|
 |default|malinin_nikita|**7/7**|**278**|
-|default|novozhilov_mikhail|**7/7**|**202**|
+|default|novozhilov_mikhail|**7/7**|**201**|
 |default|pigasin_dmitry|**7/7**|**312**|
 |default|pinegina_natalia|**7/7**|**277**|
 |default|pisarevsky_vadim|6/7|327|
 |default|pushchin_alexey|2/7|59|
 |default|putilin_artyom|4/7|104|
-|default|rodygin_vadim|6/7|174|
+|default|rodygin_vadim|6/7|173|
 |default|salnikov_nikolay|**7/7**|**246**|
-|default|smirnov_denis|**7/7**|**363**|
+|default|smirnov_denis|**7/7**|**362**|
 |default|suchkov_vladislav|5/7|123|
-|default|vikhrev_ivan|**7/7**|**290**|
-|default|volkovskiy_pavel|**7/7**|**212**|
+|default|vikhrev_ivan|**7/7**|**289**|
+|default|volkovskiy_pavel|**7/7**|**211**|
 |default|zemskov_roman|**7/7**|**345**|
 |default|zinoviev_vladimir|**7/7**|**404**|
 |default|zlobin_george|**7/7**|**259**|
-|default|znamenskiy_mikhail|**7/7**|**322**|
+|default|znamenskiy_mikhail|**7/7**|**321**|
 |default|zvorykin_aleksandr|**7/7**|**307**|
 
-Passed: 19
+Passed: 20
 
-**Total Passed: 19**
+**Total Passed: 20**
 
 ---
 *Maximum Score: 448 (64 per task)*
