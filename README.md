@@ -465,6 +465,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|pisarevsky_vadim|0.1044|8|
 |default|zvorykin_aleksandr|0.1289|17|
 |default|zemskov_roman|0.1291|5|
+|default|kryukov_dmitry|0.1569|26|
 |default|rodygin_vadim|0.1602|10|
 |default|znamenskiy_mikhail|0.1614|6|
 |default|vikhrev_ivan|0.1614|9|
@@ -494,6 +495,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|zvorykin_aleksandr|0.0576|23|
 |**FAST**|**FAST**|**0.0695**|**-**|
 |default|ermilov_dmitry|0.1209|13|
+|default|kryukov_dmitry|0.1220|26|
 |default|zinoviev_vladimir|0.1237|2|
 |default|lobanova_elizaveta|0.1244|3|
 |default|pushchin_alexey|0.1248|24|
@@ -522,6 +524,7 @@ One may use numba or C strings to write CUDA kernels.
 |-----|----|------|----|
 |default|kozlov_mikhail|0.0318|17|
 |default|ermilov_dmitry|0.0323|10|
+|default|kryukov_dmitry|0.0330|23|
 |default|pigasin_dmitry|0.0331|9|
 |default|zinoviev_vladimir|0.0346|2|
 |default|volkovskiy_pavel|0.0370|22|
@@ -561,6 +564,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|smirnov_denis|0.1727|1|
 |default|pisarevsky_vadim|0.1736|5|
 |default|salnikov_nikolay|0.1750|16|
+|default|kryukov_dmitry|0.1786|18|
 |default|zvorykin_aleksandr|0.1799|12|
 |default|znamenskiy_mikhail|0.1810|3|
 |default|zlobin_george|0.1812|10|
@@ -587,6 +591,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|lobanova_elizaveta|0.2060|4|
 |default|chekmaryov_petr|0.2070|11|
 |default|znamenskiy_mikhail|0.2180|7|
+|default|kryukov_dmitry|0.2300|17|
 |default|malinin_nikita|0.2580|12|
 |default|vikhrev_ivan|0.2670|16|
 |default|bolshakova_viktoriya|TEST FAILED|-|
@@ -596,38 +601,38 @@ One may use numba or C strings to write CUDA kernels.
 |Group|Name|Passed|Score|
 |-----|----|------|-----|
 |default|belov_dmitry|1/7|40|
-|default|bolshakova_viktoriya|5/7|130|
-|default|chekmaryov_petr|**7/7**|**317**|
-|default|chervyakov_ivan|**7/7**|**301**|
-|default|ermilov_dmitry|**7/7**|**309**|
+|default|bolshakova_viktoriya|5/7|127|
+|default|chekmaryov_petr|**7/7**|**313**|
+|default|chervyakov_ivan|**7/7**|**298**|
+|default|ermilov_dmitry|**7/7**|**308**|
 |default|kireev_daniil|0/7|0|
-|default|korobeynikov_aleksey|5/7|164|
-|default|kozlov_mikhail|**7/7**|**287**|
-|default|kryukov_dmitry|2/7|62|
-|default|lobanova_elizaveta|**7/7**|**391**|
-|default|lukicheva_polina|5/7|149|
-|default|malinin_nikita|**7/7**|**271**|
-|default|novozhilov_mikhail|4/7|129|
-|default|pigasin_dmitry|**7/7**|**319**|
-|default|pinegina_natalia|**7/7**|**290**|
-|default|pisarevsky_vadim|6/7|331|
-|default|pushchin_alexey|2/7|63|
-|default|putilin_artyom|4/7|108|
-|default|rodygin_vadim|3/7|111|
-|default|salnikov_nikolay|**7/7**|**253**|
-|default|smirnov_denis|**7/7**|**372**|
-|default|suchkov_vladislav|3/7|68|
-|default|vikhrev_ivan|**7/7**|**299**|
-|default|volkovskiy_pavel|5/7|139|
-|default|zemskov_roman|**7/7**|**351**|
-|default|zinoviev_vladimir|**7/7**|**407**|
-|default|zlobin_george|**7/7**|**268**|
-|default|znamenskiy_mikhail|**7/7**|**331**|
-|default|zvorykin_aleksandr|**7/7**|**314**|
+|default|korobeynikov_aleksey|5/7|161|
+|default|kozlov_mikhail|**7/7**|**286**|
+|default|kryukov_dmitry|**7/7**|**238**|
+|default|lobanova_elizaveta|**7/7**|**389**|
+|default|lukicheva_polina|5/7|146|
+|default|malinin_nikita|**7/7**|**267**|
+|default|novozhilov_mikhail|4/7|127|
+|default|pigasin_dmitry|**7/7**|**316**|
+|default|pinegina_natalia|**7/7**|**286**|
+|default|pisarevsky_vadim|6/7|330|
+|default|pushchin_alexey|2/7|61|
+|default|putilin_artyom|4/7|106|
+|default|rodygin_vadim|3/7|109|
+|default|salnikov_nikolay|**7/7**|**250**|
+|default|smirnov_denis|**7/7**|**370**|
+|default|suchkov_vladislav|3/7|67|
+|default|vikhrev_ivan|**7/7**|**295**|
+|default|volkovskiy_pavel|5/7|136|
+|default|zemskov_roman|**7/7**|**350**|
+|default|zinoviev_vladimir|**7/7**|**405**|
+|default|zlobin_george|**7/7**|**264**|
+|default|znamenskiy_mikhail|**7/7**|**327**|
+|default|zvorykin_aleksandr|**7/7**|**312**|
 
-Passed: 16
+Passed: 17
 
-**Total Passed: 16**
+**Total Passed: 17**
 
 ---
 *Maximum Score: 448 (64 per task)*
