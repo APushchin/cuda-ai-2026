@@ -475,6 +475,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|bolshakova_viktoriya|0.1664|24|
 |default|pinegina_natalia|0.1664|7|
 |default|zlobin_george|0.1667|16|
+|default|volkovskiy_pavel|0.1671|25|
 |default|salnikov_nikolay|0.1675|21|
 |default|chervyakov_ivan|0.1678|12|
 |default|ermilov_dmitry|0.1845|13|
@@ -482,7 +483,6 @@ One may use numba or C strings to write CUDA kernels.
 |default|lukicheva_polina|0.2727|19|
 |default|suchkov_vladislav|0.5691|18|
 |**REF**|**REF**|**0.5748**|**-**|
-|default|volkovskiy_pavel|TOO SLOW|-|
 
 ## 4_block_gemm_cuda (4096 elements)
 |Group|Name|Result|Rank|
@@ -592,27 +592,27 @@ One may use numba or C strings to write CUDA kernels.
 |default|belov_dmitry|1/7|40|
 |default|bolshakova_viktoriya|5/7|132|
 |default|chekmaryov_petr|**7/7**|**319**|
-|default|chervyakov_ivan|**7/7**|**306**|
-|default|ermilov_dmitry|**7/7**|**310**|
+|default|chervyakov_ivan|**7/7**|**305**|
+|default|ermilov_dmitry|**7/7**|**309**|
 |default|kireev_daniil|0/7|0|
 |default|korobeynikov_aleksey|5/7|167|
 |default|kozlov_mikhail|**7/7**|**288**|
 |default|kryukov_dmitry|2/7|62|
 |default|lobanova_elizaveta|**7/7**|**392**|
-|default|lukicheva_polina|5/7|153|
+|default|lukicheva_polina|5/7|152|
 |default|malinin_nikita|**7/7**|**273**|
 |default|novozhilov_mikhail|4/7|131|
-|default|pigasin_dmitry|**7/7**|**321**|
+|default|pigasin_dmitry|**7/7**|**320**|
 |default|pinegina_natalia|**7/7**|**293**|
 |default|pisarevsky_vadim|6/7|332|
 |default|pushchin_alexey|0/7|0|
 |default|putilin_artyom|4/7|109|
 |default|rodygin_vadim|3/7|112|
-|default|salnikov_nikolay|**7/7**|**256**|
+|default|salnikov_nikolay|**7/7**|**255**|
 |default|smirnov_denis|**7/7**|**374**|
-|default|suchkov_vladislav|3/7|69|
+|default|suchkov_vladislav|3/7|68|
 |default|vikhrev_ivan|**7/7**|**301**|
-|default|volkovskiy_pavel|2/7|59|
+|default|volkovskiy_pavel|3/7|81|
 |default|zemskov_roman|**7/7**|**352**|
 |default|zinoviev_vladimir|**7/7**|**407**|
 |default|zlobin_george|**7/7**|**270**|
