@@ -524,9 +524,9 @@ One may use numba or C strings to write CUDA kernels.
 |default|volkovskiy_pavel|0.1403|25|
 |default|znamenskiy_mikhail|0.1707|5|
 |default|chervyakov_ivan|0.1782|10|
+|default|belov_dmitry|0.1790|29|
 |default|novozhilov_mikhail|0.1797|16|
 |**REF**|**REF**|**0.2981**|**-**|
-|default|belov_dmitry|TEST FAILED|-|
 
 ## 5_gemm_cublas (4096 elements)
 |Group|Name|Result|Rank|
@@ -630,7 +630,7 @@ One may use numba or C strings to write CUDA kernels.
 |Group|Name|Passed|Score|
 |-----|----|------|-----|
 |default|babayan_konstantin|**7/7**|**238**|
-|default|belov_dmitry|4/7|108|
+|default|belov_dmitry|5/7|117|
 |default|bolshakova_viktoriya|5/7|116|
 |default|chekmaryov_petr|**7/7**|**299**|
 |default|chervyakov_ivan|**7/7**|**283**|
@@ -642,7 +642,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|lobanova_elizaveta|**7/7**|**382**|
 |default|lukicheva_polina|5/7|134|
 |default|malinin_nikita|**7/7**|**271**|
-|default|novozhilov_mikhail|**7/7**|**191**|
+|default|novozhilov_mikhail|**7/7**|**190**|
 |default|pigasin_dmitry|**7/7**|**306**|
 |default|pinegina_natalia|**7/7**|**267**|
 |default|pisarevsky_vadim|**7/7**|**347**|
