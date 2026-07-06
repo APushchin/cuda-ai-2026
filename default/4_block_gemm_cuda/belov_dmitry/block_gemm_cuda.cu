@@ -4,8 +4,9 @@
 
 __global__ void blockGennFunc(const float* mtxA, const float* mtxB, float* mtxC, int mtxSize, int numThreads)
 {
-    extern __shared__ float localMtxA[];
-    extern __shared__ float localMtxB[];
+    extern __shared__ float sharedBuffer[];
+    float* sharedMtxA = sharedBuffer; 
+    float* sharedMtxB = &sharedBuffer[numThreads * numThreads];
 
     int numBlocks = gridDim.x;
 
@@ -19,17 +20,32 @@ __global__ void blockGennFunc(const float* mtxA, const float* mtxB, float* mtxC,
 
     for (int iBlock = 0; iBlock < numBlocks; ++iBlock)
     {
-        localMtxA[colIndexBlock*numThreads + rowIndexBlock] = 
-            mtxA[rowIndexFull*mtxSize + (iBlock*numThreads + colIndexBlock)];
+        if (rowIndexFull < mtxSize && (iBlock*numThreads + colIndexBlock) < mtxSize)
+        {
+            sharedMtxA[rowIndexBlock*numThreads + colIndexBlock] = 
+                mtxA[rowIndexFull*mtxSize + (iBlock*numThreads + colIndexBlock)];
+        }
+        else
+        {
+            sharedMtxA[rowIndexBlock*numThreads + colIndexBlock] = 0.0f;
+        }
 
-        localMtxB[colIndexBlock*numThreads + rowIndexBlock] = 
-            mtxB[(iBlock*numThreads + rowIndexBlock)*mtxSize + colIndexFull];
+
+        if ((iBlock*numThreads + rowIndexBlock) < mtxSize && colIndexFull < mtxSize)
+        {
+            sharedMtxB[rowIndexBlock*numThreads + colIndexBlock] = 
+                mtxB[(iBlock*numThreads + rowIndexBlock)*mtxSize + colIndexFull];
+        }
+        else
+        {
+            sharedMtxB[rowIndexBlock*numThreads + colIndexBlock] = 0.0f;
+        }
 
         __syncthreads();
 
         for (int iThread = 0; iThread < numThreads; ++iThread)
-            mtxCEl += localMtxA[rowIndexBlock*numThreads + iThread] * localMtxB[iThread*numThreads + colIndexBlock];
-
+            mtxCEl += sharedMtxA[rowIndexBlock*numThreads + iThread] * sharedMtxB[iThread*numThreads + colIndexBlock];
+            
         __syncthreads();
     }
 
@@ -57,7 +73,7 @@ std::vector<float> BlockGemmCUDA(const std::vector<float>& a,
 
     const size_t numThreads = 16;
     const size_t numMtxElInBlock = numThreads*numThreads;
-    const size_t bitMtxNumElNumMtxElInBlock = numMtxElInBlock * sizeof(float);
+    const size_t bitMtxNumElNumMtxElInBlock = 2 * numMtxElInBlock * sizeof(float);
     dim3 threadsPerBlock(numThreads, numThreads);
     const size_t numBlocks = (n + numThreads - 1) / numThreads;
     dim3 blockCount(numBlocks, numBlocks);
