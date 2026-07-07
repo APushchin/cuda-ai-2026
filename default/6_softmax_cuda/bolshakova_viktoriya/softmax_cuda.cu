@@ -1,8 +1,10 @@
 #include "softmax_cuda.h"
 #include <cuda_runtime.h>
+
 #include <cmath>
-#include <iostream>  // ДОБАВИТЬ
+#include <iostream>
 #include <thread>
+#include <cfloat>
 
 constexpr int WARP_SIZE = 32;
 
@@ -54,7 +56,7 @@ __global__ void softMaxExecute(const float *__restrict__ input, float *__restric
     if (warp_id == 0)
     {
         float max = (lane_id < num_warps) ? shared[lane_id] : -FLT_MAX;
-        max = warpReduceMax(cmax);
+        max = warpReduceMax(max);
         if (lane_id == 0)
         {
             shared[0] = max;

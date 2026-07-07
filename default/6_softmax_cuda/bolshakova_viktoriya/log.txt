@@ -1,9 +1,0 @@
-/home/crazyproger/sandbox/cuda-ai-2026/default/6_softmax_cuda/bolshakova_viktoriya/softmax_cuda.cu(41): error: identifier "FLT_MAX" is undefined
-      float local_max = -FLT_MAX;
-                         ^
-
-/home/crazyproger/sandbox/cuda-ai-2026/default/6_softmax_cuda/bolshakova_viktoriya/softmax_cuda.cu(57): error: identifier "cmax" is undefined
-          max = warpReduceMax(cmax);
-                              ^
-
-2 errors detected in the compilation of "/home/crazyproger/sandbox/cuda-ai-2026/default/6_softmax_cuda/bolshakova_viktoriya/softmax_cuda.cu".

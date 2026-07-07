@@ -29,7 +29,7 @@ __global__ void layer_norm_kernel(const float *__restrict__ input,
 
     extern __shared__ float shared[];
     shared[id_thread] = sum;
-    shared[id_thread + row_size] = sq_sum;
+    shared[id_thread + num_threads] = sq_sum;
     __syncthreads();
 
     for (int stride = num_threads / 2; stride > 0; stride >>= 1)
