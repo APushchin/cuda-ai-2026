@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/home/crazyproger/sandbox/./main.py", line 115, in <module>
-    main()
-  File "/home/crazyproger/sandbox/./main.py", line 102, in main
-    result_flat = layernorm_pycuda(input_data, gamma, beta, row_size)
-  File "/home/crazyproger/sandbox/layernorm_pycuda.py", line 97, in layernorm_pycuda
-    cuda.memcpy_htod(d_beta, beta_np)
-NameError: name 'd_beta' is not defined. Did you mean: 'beta'?
