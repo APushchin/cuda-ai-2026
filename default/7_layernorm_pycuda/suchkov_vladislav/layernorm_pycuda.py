@@ -12,18 +12,19 @@ __global__ void LayernormKernel(const float* input, const float* gamma, const fl
     int bid = blockIdx.x;
     int tid = threadIdx.x;
 
-    __shared__ float loc_sums[BLOCK_SIZE];
-    float loc_sum = 0.f;
-    for (int i = tid; i < row_size; i += BLOCK_SIZE) {
-        loc_sum += input[i + bid * row_size];
+    float loc_sum = 0.0f;
+    for (int col = tid; col < row_size; col += BLOCK_SIZE) {
+        loc_sum += input[bid * row_size + col];
     }
+
+    __shared__ float loc_sums[BLOCK_SIZE];
+    __shared__ float row_sum;
     loc_sums[tid] = loc_sum;
     __syncthreads();
 
-    __shared__ float row_sum;
     __shared__ float mean;
     if (tid == 0) {
-        row_sum = 0.f;
+        row_sum = 0.0f;
         for (int i = 0; i < BLOCK_SIZE; ++i) {
             row_sum += loc_sums[i];
         }
@@ -31,19 +32,21 @@ __global__ void LayernormKernel(const float* input, const float* gamma, const fl
     }
     __syncthreads();
 
-    loc_sum = 0.f;
+
+    loc_sum = 0.0f;
     float x;
-    for (int i = 0; i < row_size; i += BLOCK_SIZE) {
-        x = input[i + bid * row_size];
-        x = x - mean;
-        loc_sum += x * x;
+    for (int col = tid; col < row_size; col += BLOCK_SIZE) {
+        x = input[bid * row_size + col];
+        loc_sum += (x - mean) * (x - mean);
     }
+
     loc_sums[tid] = loc_sum;
     __syncthreads();
 
+
     __shared__ float var;
     if (tid == 0) {
-        row_sum = 0.f;
+        row_sum = 0.0f;
         for (int i = 0; i < BLOCK_SIZE; ++i) {
             row_sum += loc_sums[i];
         }
@@ -51,9 +54,10 @@ __global__ void LayernormKernel(const float* input, const float* gamma, const fl
     }
     __syncthreads();
 
-    for (int i = tid; i < row_size; i += BLOCK_SIZE) {
-        int idx = i + bid * row_size;
-        output[idx] = gamma[i] * ((input[idx] - mean) / sqrtf(var + eps)) + beta[idx];
+    for (int col = tid; col < row_size; col += BLOCK_SIZE) {
+        int idx = bid * row_size + col;
+        x = (input[idx] - mean) / sqrtf(var + eps);
+        output[idx] = gamma[col] * x + beta[col];
     }
 }
 """
@@ -94,22 +98,22 @@ def layernorm_pycuda(input, gamma, beta, row_size, eps=1e-5):
 
     cuda.memcpy_htod(input_dev, input_np)
     cuda.memcpy_htod(gamma_dev, gamma_np)
-    cuda.memcpy_htod(d_beta, beta_np)
+    cuda.memcpy_htod(beta_dev, beta_np)
 
     mod = SourceModule(layernormKernel,  options=["-O3", "-use_fast_math"])
     kernel = mod.get_function("LayernormKernel")
 
-    blk_size = 32
-    row_count = input_np.size // row_size  
-    kernel(input_dev, gamma_dev, d_beta, output_dev, np.int32(row_size), np.float32(eps), block=(blk_size, 1, 1), grid = (row_count, 1))
+    blk_size = min(row_size, 32)
+    row_count = input_np.size // row_size
+    stream = cuda.Stream()
+    kernel(input_dev, gamma_dev, beta_dev, output_dev, np.int32(row_size), np.float32(eps), block=(blk_size, 1, 1), grid = (row_count, 1),)
 
     cuda.memcpy_dtoh(output, output_dev)
+    stream.synchronize()
 
     input_dev.free()
     gamma_dev.free()
-    d_beta.free()
+    beta_dev.free()
     output_dev.free()
 
     return output
-
-

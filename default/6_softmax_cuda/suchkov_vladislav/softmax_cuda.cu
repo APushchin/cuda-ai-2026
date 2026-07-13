@@ -13,7 +13,7 @@ __global__ void SoftmaxCUDAKernel(const float* input, float* output, int num_col
     __shared__ float loc_maxs[BLOCK_SIZE];
     float loc_max = -__FLT_MAX__;
     for (int i = tid; i < num_cols; i += BLOCK_SIZE) {
-        loc_max = fmaxf(loc_max, input[bid * num_cols + i]);
+        loc_max = cuda::std::fmax(loc_max, input[bid * num_cols + i]);
     }
     loc_maxs[tid] = loc_max;
     __syncthreads();
@@ -22,14 +22,14 @@ __global__ void SoftmaxCUDAKernel(const float* input, float* output, int num_col
     if (tid == 0) {
         row_max = -__FLT_MAX__;
         for (int i = 0; i < BLOCK_SIZE; ++i) {
-            row_max = fmax(loc_maxs[i], row_max);
+            row_max = cuda::std::fmax(loc_maxs[i], row_max);
         }
     }
 
     __shared__ float loc_sums[BLOCK_SIZE];
     float loc_sum = 0.f;
-    for (int i = 0; i < num_cols; i += BLOCK_SIZE) {
-        loc_sum += __expf(input[bid * num_cols + i] - row_max);
+    for (int i = tid; i < num_cols; i += BLOCK_SIZE) {
+        loc_sum += cuda::std::expf(input[bid * num_cols + i] - row_max);
     }
     loc_sums[tid] = loc_sum;
     __syncthreads();
@@ -42,9 +42,9 @@ __global__ void SoftmaxCUDAKernel(const float* input, float* output, int num_col
         }
     }
 
-    for (int i = 0; i < num_cols; i += BLOCK_SIZE) {
-        int idx = bid + num_cols + i;
-        output[idx] = __expf(input[idx] - row_max) / row_sum;
+    for (int i = tid; i < num_cols; i += BLOCK_SIZE) {
+        int idx = bid * num_cols + i;
+        output[idx] = cuda::std::expf(input[idx] - row_max) / row_sum;
     }
 }
 
