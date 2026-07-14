@@ -56,20 +56,84 @@ std::vector<float> NaiveGemmCUDA(
         throw std::runtime_error("Failed to allocate device memory for output");
     }
 
-    error = cudaMemcpy(device_input_lhs, a.data(), matrix_size, cudaMemcpyHostToDevice);
+    cudaStream_t stream;
+    error = cudaStreamCreate(&stream);
     if (error != cudaSuccess) {
         cudaFree(device_input_lhs);
         cudaFree(device_input_rhs);
         cudaFree(device_result);
+        throw std::runtime_error("Failed to create CUDA stream");
+    }
+
+    const auto input_lhs_raw_data = (void*)(a.data());
+    error = cudaHostRegister(input_lhs_raw_data, matrix_size, cudaHostRegisterDefault);
+    if (error != cudaSuccess) {
+        cudaFree(device_input_lhs);
+        cudaFree(device_input_rhs);
+        cudaFree(device_result);
+        cudaStreamDestroy(stream);
+        throw std::runtime_error("Failed to register host memory for input A");
+    }
+
+    const auto input_rhs_raw_data = (void*)(b.data());
+    error = cudaHostRegister(input_rhs_raw_data, matrix_size, cudaHostRegisterDefault);
+    if (error != cudaSuccess) {
+        cudaFree(device_input_lhs);
+        cudaFree(device_input_rhs);
+        cudaFree(device_result);
+        cudaHostUnregister(input_lhs_raw_data);
+        cudaStreamDestroy(stream);
+        throw std::runtime_error("Failed to register host memory for input A");
+    }
+
+    std::vector<float> result;
+    result.reserve(elements_number);
+    const auto result_raw_data = (void*)(result.data());
+    error = cudaHostRegister(result_raw_data, matrix_size, cudaHostRegisterDefault);
+    if (error != cudaSuccess) {
+        cudaFree(device_input_lhs);
+        cudaFree(device_input_rhs);
+        cudaFree(device_result);
+        cudaHostUnregister(input_lhs_raw_data);
+        cudaHostUnregister(input_rhs_raw_data);
+        cudaStreamDestroy(stream);
+        throw std::runtime_error("Failed to register host memory for input");
+    }
+
+    error = cudaMemcpyAsync(
+        device_input_lhs,
+        input_lhs_raw_data,
+        matrix_size,
+        cudaMemcpyHostToDevice,
+        stream
+    );
+    if (error != cudaSuccess) {
+        cudaFree(device_input_lhs);
+        cudaFree(device_input_rhs);
+        cudaFree(device_result);
+        cudaHostUnregister(input_lhs_raw_data);
+        cudaHostUnregister(input_rhs_raw_data);
+        cudaHostUnregister(result_raw_data);
+        cudaStreamDestroy(stream);
         throw std::runtime_error("Failed to copy input A to device");
     }
 
-    error = cudaMemcpy(device_input_rhs, b.data(), matrix_size, cudaMemcpyHostToDevice);
+    error = cudaMemcpyAsync(
+        device_input_rhs,
+        input_rhs_raw_data,
+        matrix_size,
+        cudaMemcpyHostToDevice,
+        stream
+    );
     if (error != cudaSuccess) {
         cudaFree(device_input_lhs);
         cudaFree(device_input_rhs);
         cudaFree(device_result);
-        throw std::runtime_error("Failed to copy input B to device");
+        cudaHostUnregister(input_lhs_raw_data);
+        cudaHostUnregister(input_rhs_raw_data);
+        cudaHostUnregister(result_raw_data);
+        cudaStreamDestroy(stream);
+        throw std::runtime_error("Failed to copy input A to device");
     }
 
     constexpr auto square_block_size = 16;
@@ -82,26 +146,43 @@ std::vector<float> NaiveGemmCUDA(
         device_input_lhs, device_input_rhs, device_result, n
     );
 
-    error = cudaDeviceSynchronize();
+    error = cudaMemcpyAsync(
+        result_raw_data,
+        device_result,
+        matrix_size,
+        cudaMemcpyDeviceToHost,
+        stream
+    );
     if (error != cudaSuccess) {
         cudaFree(device_input_lhs);
         cudaFree(device_input_rhs);
         cudaFree(device_result);
-        throw std::runtime_error("Failed to synchronize CUDA stream");
+        cudaHostUnregister(input_lhs_raw_data);
+        cudaHostUnregister(input_rhs_raw_data);
+        cudaHostUnregister(result_raw_data);
+        cudaStreamDestroy(stream);
+        throw std::runtime_error("Failed to copy result to host");
     }
 
-    auto result = std::vector<float>(matrix_size);
-    error = cudaMemcpy(result.data(), device_result, matrix_size, cudaMemcpyDeviceToHost);
+    error = cudaStreamSynchronize(stream);
     if (error != cudaSuccess) {
         cudaFree(device_input_lhs);
         cudaFree(device_input_rhs);
         cudaFree(device_result);
-        throw std::runtime_error("Failed to copy result to host");
+        cudaHostUnregister(input_lhs_raw_data);
+        cudaHostUnregister(input_rhs_raw_data);
+        cudaHostUnregister(result_raw_data);
+        cudaStreamDestroy(stream);
+        throw std::runtime_error("Failed to synchronize CUDA stream");
     }
 
     cudaFree(device_input_lhs);
     cudaFree(device_input_rhs);
     cudaFree(device_result);
+    cudaHostUnregister(input_lhs_raw_data);
+    cudaHostUnregister(input_rhs_raw_data);
+    cudaHostUnregister(result_raw_data);
+    cudaStreamDestroy(stream);
 
     return result;
 }

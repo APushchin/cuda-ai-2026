@@ -1,35 +1,69 @@
-#include <vector>
+#include <cfloat> // FLT_MAX
 #include <stdexcept>
-#include <cstring>
-#include <cmath>
+#include <vector>
 
-#include <cuda_runtime.h>
+#include <iostream>  // std::cout
 
-#include "gelu_cuda.h"
+#include "softmax_cuda.h"
 
-#define DIV_UP(a, b) ( ((a) + (b) - 1) / (b) )
+#define BLOCK_SIZE 32
 
-__global__ void gelu_kernel(
+__global__ void softmax_kernel(
+    float* __restrict__ output,
     const float* __restrict__ input,
-    float*       __restrict__ output,
-    size_t       length
+    int row_count,
+    int row_length
 ) {
-    const auto idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= length) return;
+    extern __shared__ float shared_memory[];
 
-    const auto x = input[idx];
+    const auto row_idx = blockIdx.x;
+    const auto thread_idx = threadIdx.x;
 
-    constexpr auto SQRT_2_OVER_PI = 0.7978845608f; // std::sqrt(2.0f / M_PI)
-    constexpr auto COEFFICIENT = 0.044715f;
+    auto local_max = -FLT_MAX;
+    for (int i = thread_idx; i < row_length; i += BLOCK_SIZE) {
+        local_max = fmaxf(local_max, input[row_idx * row_length + i]);
+    }
 
-    const auto tanh_argument = SQRT_2_OVER_PI * (x + COEFFICIENT * x * x * x);
+    auto* current_shared_memory = shared_memory + BLOCK_SIZE;
+    current_shared_memory[thread_idx] = local_max;
+    __syncthreads();
 
-    output[idx] = 0.5f * x * (1.f + tanhf(tanh_argument));
+    __shared__ float row_max;
+    if(thread_idx == 0) {
+        row_max = -FLT_MAX;
+        for (int i = 0; i < BLOCK_SIZE; ++i) {
+            row_max = fmaxf(current_shared_memory[i], row_max);
+        }
+    }
+
+    auto sum = 0.f;
+    for (int i = thread_idx; i < row_length; i += BLOCK_SIZE) {
+        sum += expf(input[row_idx * row_length + i] - row_max);
+    }
+    current_shared_memory[thread_idx] = sum;
+    __syncthreads();
+
+    __shared__ float row_sum;
+    if(thread_idx == 0) {
+        row_sum = 0.f;
+        for(int i = 0; i < BLOCK_SIZE; ++i) {
+            row_sum += current_shared_memory[i];
+        }
+    }
+    __syncthreads();
+
+    for (int i = thread_idx; i < row_length; i += BLOCK_SIZE) {
+        output[row_idx * row_length + i] = (
+            expf(input[row_idx * row_length + i] - row_max) / row_sum
+        );
+    }
 }
 
-std::vector<float> GeluCUDA(const std::vector<float>& input) {
-    const auto length = input.size();
-    const auto size_in_bytes = length * sizeof(float);
+std::vector<float> SoftmaxCUDA(const std::vector<float>& input, int row_count)
+{
+    const auto elements_number = input.size();
+    const auto size_in_bytes = elements_number * sizeof(float);
+    const auto row_length = elements_number / row_count;
 
     float* device_input_buffer  = nullptr;
     auto error = cudaMalloc(&device_input_buffer, size_in_bytes);
@@ -62,14 +96,15 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
     }
 
     std::vector<float> result;
-    result.reserve(length);
-    const auto result_raw_data = (void*)(result.data());
-    error = cudaHostRegister(result_raw_data, size_in_bytes, cudaHostRegisterDefault);
+    result.reserve(elements_number);
+    const auto output_raw_data = (void*)(result.data());
+    error = cudaHostRegister(output_raw_data, size_in_bytes, cudaHostRegisterDefault);
     if (error != cudaSuccess) {
         cudaFree(device_input_buffer);
         cudaFree(device_output_buffer);
+        cudaHostUnregister(input_raw_data);
         cudaStreamDestroy(stream);
-        throw std::runtime_error("Failed to register host memory for input");
+        throw std::runtime_error("Failed to register host memory for output");
     }
 
     error = cudaMemcpyAsync(
@@ -83,20 +118,18 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
         cudaFree(device_input_buffer);
         cudaFree(device_output_buffer);
         cudaHostUnregister(input_raw_data);
+        cudaHostUnregister(output_raw_data);
         cudaStreamDestroy(stream);
         throw std::runtime_error("Failed to copy data to device");
     }
 
-    constexpr int threads_per_block = 256;
-    const auto num_blocks = DIV_UP(length, threads_per_block);
-    gelu_kernel<<<num_blocks, threads_per_block, 0, stream>>>(
-        device_input_buffer,
-        device_output_buffer,
-        length
+    const auto shared_memory_size = (row_length + BLOCK_SIZE) * sizeof(float);
+    softmax_kernel<<<dim3(row_count), dim3(BLOCK_SIZE), shared_memory_size, stream>>>(
+        device_output_buffer, device_input_buffer, row_count, row_length
     );
 
     error = cudaMemcpyAsync(
-        result_raw_data,
+        output_raw_data,
         device_output_buffer,
         size_in_bytes,
         cudaMemcpyDeviceToHost,
@@ -106,7 +139,7 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
         cudaFree(device_input_buffer);
         cudaFree(device_output_buffer);
         cudaHostUnregister(input_raw_data);
-        cudaHostUnregister(result_raw_data);
+        cudaHostUnregister(output_raw_data);
         cudaStreamDestroy(stream);
         throw std::runtime_error("Failed to copy output from device");
     }
@@ -116,7 +149,7 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
         cudaFree(device_input_buffer);
         cudaFree(device_output_buffer);
         cudaHostUnregister(input_raw_data);
-        cudaHostUnregister(result_raw_data);
+        cudaHostUnregister(output_raw_data);
         cudaStreamDestroy(stream);
         throw std::runtime_error("Failed to synchronize CUDA stream");
     }
@@ -124,12 +157,11 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
     cudaFree(device_input_buffer);
     cudaFree(device_output_buffer);
     cudaHostUnregister(input_raw_data);
-    cudaHostUnregister(result_raw_data);
+    cudaHostUnregister(output_raw_data);
     cudaStreamDestroy(stream);
 
     return result;
 }
-
 
 #define DEBUG false
 
@@ -141,27 +173,33 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
 #include <algorithm> // std::generate, std::transform, std::min_element, std::accumulate
 
 #define RELATIVE_ERROR_THRESHOLD 0.001f
+constexpr size_t ROW_LENGTH = 1024;
+constexpr size_t ROW_COUNT = 1024;
+constexpr size_t NUM_EXPERIMENTS = 5;
 
-std::vector<float> GeluReference(const std::vector<float>& input) {
-    std::vector<float> output;
-    output.reserve(input.size());
-    std::transform(
-        input.begin(),
-        input.end(),
-        std::back_inserter(output),
-        [](float x){
-            return 0.5f * x * (
-                1.0f + std::tanh(
-                    std::sqrt(2.0f / M_PI) * (x + 0.044715f * x*x*x)
-                )
-            );
+std::vector<float> SoftmaxReference(const std::vector<float>& input, int row_count) {
+    const auto elements_number = input.size();
+    const auto row_length = elements_number / row_count;
+    std::vector<float> output(elements_number);
+    for (int i = 0; i < row_count; ++i) {
+        const auto max_value = *std::max_element(
+            input.begin() + i * row_length,
+            input.begin() + i * (row_length + 1)
+        );
+        auto sum = 0.f;
+        auto exponents = std::vector<float>();
+        exponents.reserve(row_length);
+        for (int i = 0; i < row_length; ++i) {
+            exponents[i] = std::exp(input[i * row_length + i] - max_value);
+            sum += exponents[i];
         }
-    );
+        auto coefficient = 1.f / sum;
+        for (int i = 0; i < row_length; ++i) {
+            output[i * row_length + i] = exponents[i] * coefficient;
+        }
+    }
     return output;
 }
-
-constexpr size_t INPUT_LENGTH = 10000000;
-constexpr size_t NUM_EXPERIMENTS = 5;
 
 const std::vector<float> generate_input(size_t size) {
     std::vector<float> random_floats(size);
@@ -179,9 +217,10 @@ const std::vector<float> generate_input(size_t size) {
 }
 
 int main() {
-    const auto input = generate_input(INPUT_LENGTH);
-    const auto result_reference = GeluReference(input);
-    GeluCUDA(input); // warming up
+    const auto elements_number = ROW_LENGTH * ROW_COUNT;
+    const auto input = generate_input(elements_number);
+    const auto result_reference = SoftmaxReference(input, ROW_COUNT);
+    SoftmaxCUDA(input, ROW_COUNT); // warming up
 
     float max_absolute_error = 0.f;
     float max_relative_error = 0.f;
@@ -189,33 +228,38 @@ int main() {
     std::vector<double> time_list;
     for (int experiment_id = 0; experiment_id < NUM_EXPERIMENTS; ++experiment_id) {
         const auto start = std::chrono::high_resolution_clock::now();
-        const auto result = GeluCUDA(input);
+        const auto result = SoftmaxCUDA(input, ROW_COUNT);
         const auto finish = std::chrono::high_resolution_clock::now();
         const auto duration = std::chrono::duration<double>(finish - start);
         time_list.push_back(duration.count());
 
-        for (int j = 0; j < INPUT_LENGTH; ++j) {
+        int num_errors_found = 0;
+        for (int i = 0; i < elements_number; ++i) {
             max_absolute_error = std::max(
-                std::abs(result[j] - result_reference[j]),
+                std::abs(result[i] - result_reference[i]),
                 max_absolute_error
             );
-            const auto relative_error = std::abs(result[j] / result_reference[j] - 1.f);
+            const auto relative_error = std::abs(result[i] / result_reference[i] - 1.f);
             if (relative_error >= 0.001f) {
-                std::cout << "Found relative_error=" << relative_error
-                          << ", more than threshold=" << RELATIVE_ERROR_THRESHOLD
-                          << ", result=" << result[j] << " but reference=" << result_reference[j]
-                          << std::endl;
+                ++num_errors_found;
+                // std::cout << "Found relative_error=" << relative_error
+                //           << ", more than threshold=" << RELATIVE_ERROR_THRESHOLD
+                //           << ", result=" << result[i] << " but reference=" << result_reference[i]
+                //           << std::endl;
             }
             max_relative_error = std::max(
                 relative_error,
                 max_relative_error
             );
         }
+        std::cout << "Found " << num_errors_found << " errors"
+                  << " (" << num_errors_found / float(elements_number) * 100 << "%)" << std::endl;
     }
     const auto total_time = std::accumulate(time_list.begin(), time_list.end(), 0.f);
     const auto min_time = *std::min_element(time_list.begin(), time_list.end());
 
-    std::cout << "Processing " << INPUT_LENGTH << " numbers " << NUM_EXPERIMENTS << " times "
+    std::cout << "Taking Softmax from " << ROW_LENGTH << 'x' << ROW_COUNT << " matrix "
+              << NUM_EXPERIMENTS << " times "
               << "took " << total_time << " seconds"
               << ": mean=" << total_time / NUM_EXPERIMENTS << 's'
               << ", min=" << min_time << 's' << std::endl

@@ -64,7 +64,13 @@ std::vector<float> GemmCUBLAS(
         throw std::runtime_error("Failed to register host memory for input B");
     }
 
-    error = cudaMemcpyAsync(device_input_lhs, a.data(), matrix_size, cudaMemcpyHostToDevice, stream);
+    error = cudaMemcpyAsync(
+        device_input_lhs,
+        input_lhs_raw_data,
+        matrix_size,
+        cudaMemcpyHostToDevice,
+        stream
+    );
     if (error != cudaSuccess) {
         cudaFree(device_input_lhs);
         cudaFree(device_input_rhs);
@@ -74,7 +80,13 @@ std::vector<float> GemmCUBLAS(
         cudaStreamDestroy(stream);
         throw std::runtime_error("Failed to copy input A to device");
     }
-    error = cudaMemcpyAsync(device_input_rhs, b.data(), matrix_size, cudaMemcpyHostToDevice, stream);
+    error = cudaMemcpyAsync(
+        device_input_rhs,
+        input_rhs_raw_data,
+        matrix_size,
+        cudaMemcpyHostToDevice,
+        stream
+    );
     if (error != cudaSuccess) {
         cudaFree(device_input_lhs);
         cudaFree(device_input_rhs);

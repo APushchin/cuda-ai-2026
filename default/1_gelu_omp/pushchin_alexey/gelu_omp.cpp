@@ -6,7 +6,6 @@ std::vector<float> GeluOMP(const std::vector<float>& input) {
 
     constexpr auto SQRT_2_OVER_PI = 0.7978845608f; // std::sqrt(2.0f / M_PI)
     constexpr auto COEFFICIENT = 0.044715f;
-
     #pragma omp parallel for simd
     for (int i = 0; i < input.size(); ++i) {
         const auto x = input[i];
@@ -27,7 +26,7 @@ std::vector<float> GeluOMP(const std::vector<float>& input) {
     return output;
 }
 
-#define DEBUG true
+#define DEBUG false
 
 #if DEBUG
 
@@ -116,7 +115,6 @@ std::vector<float> GeluOMP_Basic(const std::vector<float>& input) {
 
     constexpr float SQRT_2_OVER_PI = 0.7978845608f; // std::sqrt(2.0f / M_PI)
     constexpr float COEFFICIENT = 0.044715f;
-
     #pragma omp parallel for
     for (int i = 0; i < input.size(); ++i) {
         const auto x = input[i];
@@ -144,7 +142,6 @@ std::vector<float> GeluOMP_LoopUnrolling(const std::vector<float>& input) {
 
     constexpr float SQRT_2_OVER_PI = 0.7978845608f; // std::sqrt(2.0f / M_PI)
     constexpr float COEFFICIENT = 0.044715f;
-
     #pragma omp parallel for
     #pragma omp unroll partial
     for (int i = 0; i < input.size(); ++i) {
@@ -196,7 +193,6 @@ int main() {
     const auto input = generate_input(INPUT_LENGTH);
     const auto result_reference = GeluReference(input);
     solution(input); // warming up
-
     float max_absolute_error = 0.f;
     float max_relative_error = 0.f;
 
