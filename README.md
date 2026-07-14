@@ -601,6 +601,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|korobeynikov_aleksey|0.1896|19|
 |default|pinegina_natalia|0.1931|4|
 |default|belov_dmitry|TEST FAILED|-|
+|default|lukicheva_polina|BUILD FAILED|-|
 
 ## 7_layernorm_pycuda (8192x16384 elements)
 |Group|Name|Result|Rank|
