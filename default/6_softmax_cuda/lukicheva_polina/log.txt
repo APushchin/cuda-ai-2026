@@ -1,4 +1,0 @@
-/home/crazyproger/sandbox/cuda-ai-2026/default/6_softmax_cuda/lukicheva_polina/softmax_cuda.cu:1:10: fatal error: sofrowCount_cuda.h: No such file or directory
-    1 | #include "sofrowCount_cuda.h"
-      |          ^~~~~~~~~~~~~~~~~~~~
-compilation terminated.

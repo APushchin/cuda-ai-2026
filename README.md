@@ -584,6 +584,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|babayan_konstantin|0.1639|22|
 |default|zemskov_roman|0.1691|9|
 |default|malinin_nikita|0.1698|14|
+|default|lukicheva_polina|0.1702|28|
 |default|vikhrev_ivan|0.1708|17|
 |default|novozhilov_mikhail|0.1722|21|
 |default|smirnov_denis|0.1727|1|
@@ -601,7 +602,6 @@ One may use numba or C strings to write CUDA kernels.
 |default|korobeynikov_aleksey|0.1896|19|
 |default|pinegina_natalia|0.1931|4|
 |default|belov_dmitry|TEST FAILED|-|
-|default|lukicheva_polina|BUILD FAILED|-|
 |default|pushchin_alexey|TEST FAILED|-|
 
 ## 7_layernorm_pycuda (8192x16384 elements)
@@ -643,34 +643,34 @@ One may use numba or C strings to write CUDA kernels.
 |default|babayan_konstantin|**7/7**|**233**|
 |default|belov_dmitry|5/7|112|
 |default|bolshakova_viktoriya|**7/7**|**171**|
-|default|chekmaryov_petr|**7/7**|**290**|
+|default|chekmaryov_petr|**7/7**|**289**|
 |default|chervyakov_ivan|**7/7**|**278**|
 |default|ermilov_dmitry|**7/7**|**298**|
 |default|kireev_daniil|0/7|0|
-|default|korobeynikov_aleksey|**7/7**|**198**|
+|default|korobeynikov_aleksey|**7/7**|**197**|
 |default|kozlov_mikhail|**7/7**|**277**|
-|default|kryukov_dmitry|**7/7**|**218**|
+|default|kryukov_dmitry|**7/7**|**217**|
 |default|lobanova_elizaveta|**7/7**|**379**|
-|default|lukicheva_polina|5/7|130|
+|default|lukicheva_polina|6/7|155|
 |default|malinin_nikita|**7/7**|**266**|
-|default|novozhilov_mikhail|**7/7**|**179**|
+|default|novozhilov_mikhail|**7/7**|**178**|
 |default|pashchenkov_maxim|**7/7**|**164**|
 |default|pigasin_dmitry|**7/7**|**304**|
-|default|pinegina_natalia|**7/7**|**258**|
-|default|pisarevsky_vadim|**7/7**|**340**|
+|default|pinegina_natalia|**7/7**|**257**|
+|default|pisarevsky_vadim|**7/7**|**339**|
 |default|pushchin_alexey|3/7|65|
-|default|putilin_artyom|6/7|140|
-|default|rodygin_vadim|**7/7**|**179**|
-|default|salnikov_nikolay|**7/7**|**232**|
-|default|smirnov_denis|**7/7**|**346**|
-|default|suchkov_vladislav|**7/7**|**159**|
-|default|vikhrev_ivan|**7/7**|**272**|
+|default|putilin_artyom|6/7|139|
+|default|rodygin_vadim|**7/7**|**178**|
+|default|salnikov_nikolay|**7/7**|**231**|
+|default|smirnov_denis|**7/7**|**345**|
+|default|suchkov_vladislav|**7/7**|**158**|
+|default|vikhrev_ivan|**7/7**|**271**|
 |default|volkovskiy_pavel|**7/7**|**200**|
 |default|zemskov_roman|**7/7**|**336**|
 |default|zinoviev_vladimir|**7/7**|**417**|
-|default|zlobin_george|**7/7**|**243**|
-|default|znamenskiy_mikhail|**7/7**|**301**|
-|default|zvorykin_aleksandr|**7/7**|**293**|
+|default|zlobin_george|**7/7**|**242**|
+|default|znamenskiy_mikhail|**7/7**|**300**|
+|default|zvorykin_aleksandr|**7/7**|**292**|
 
 Passed: 26
 
