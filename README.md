@@ -633,6 +633,7 @@ One may use numba or C strings to write CUDA kernels.
 |default|novozhilov_mikhail|0.2630|20|
 |default|rodygin_vadim|0.2640|18|
 |default|vikhrev_ivan|0.2670|16|
+|default|belov_dmitry|TEST FAILED|-|
 
 # Tasks Done
 ## default
