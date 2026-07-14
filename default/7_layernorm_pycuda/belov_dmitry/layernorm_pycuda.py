@@ -8,9 +8,8 @@ __global__ void layerNormFunc(float *output, float *input, float *gamma, float *
 {
     extern __shared__ float sharedMemory[];
 
-    float* sharedMean = sharedMemory;
-    float* sharedInvVar  = sharedMemory[col_size];
-    float* sharedOther  = sharedMemory[2*col_size];
+    float* sharedMean   = sharedMemory;
+    float* sharedInvVar = &sharedMemory[col_size];
 
     int index = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -23,12 +22,18 @@ __global__ void layerNormFunc(float *output, float *input, float *gamma, float *
         sharedMean[index] /= row_size;
     }
 
+    if (index >= col_size && index < 2*col_size)
+    {
+        sharedInvVar[index - col_size] = 0;
+    }
+
     __syncthreads();
 
     if (index < num_mtx_el)
     {
-        int meanIndex = index/row_size;
-        sharedOther[index] = (input[index] - sharedMean[meanIndex]) * (input[index] - sharedMean[meanIndex]);
+        int indexNeed = index/row_size;
+        float diff = input[index] - sharedMean[indexNeed];
+        sharedInvVar[indexNeed] += diff*diff;
     }
 
     __syncthreads();
@@ -36,9 +41,6 @@ __global__ void layerNormFunc(float *output, float *input, float *gamma, float *
     if (index < col_size)
     {
         const int elStart = index * row_size;
-        sharedInvVar[index] = 0;
-        for (int iRowEl = 0; iRowEl < row_size; ++iRowEl)
-            sharedInvVar[index] += sharedOther[elStart + iRowEl];
         sharedInvVar[index] /= row_size;
         sharedInvVar[index] = 1 / rsqrtf(sharedInvVar[index] + eps);
     }
@@ -48,7 +50,8 @@ __global__ void layerNormFunc(float *output, float *input, float *gamma, float *
     if (index < num_mtx_el)
     {
         int rowIndex  = index/row_size;
-        output[index] = gamma[index] * (input[index] - sharedMean[rowIndex]) * sharedInvVar[rowIndex] + beta[index];
+        int colIndex  = index%row_size;
+        output[index] = gamma[colIndex] * (input[index] - sharedMean[rowIndex]) * sharedInvVar[rowIndex] + beta[colIndex];
     }
 
 }
@@ -89,16 +92,19 @@ def layernorm_pycuda(input, gamma, beta, row_size, eps=1e-5):
     cuda.memcpy_htod(device_gamma, gamma)
     cuda.memcpy_htod(device_beta, beta)
 
-    threads_per_block = 256
-    blocks_per_grid = (input.size + threads_per_block - 1) // threads_per_block
-    shared_mem_size = input.size + 2*col_size
-
     col_size = input.size / row_size
 
-    layernorm_kernel(device_output, device_input, device_gamma, device_beta, np.int32(row_size), np.int32(col_size), np.int32(input.size), np.float32(eps),
-    block=(threads_per_block, 1, 1),
-    grid=(blocks_per_grid, 1),
-    shared=shared_mem_size)
+    threads_per_block = 256
+    blocks_per_grid = (input.size + threads_per_block - 1) // threads_per_block
+    shared_mem_size = int(2*col_size*4)
+
+    layernorm_kernel(
+        device_output, device_input, device_gamma, device_beta, 
+        np.int32(row_size), np.int32(col_size), np.int32(input.size), np.float32(eps),
+        block=(threads_per_block, 1, 1),
+        grid=(blocks_per_grid, 1),
+        shared=shared_mem_size
+    )
 
     output = np.empty_like(input)
     cuda.memcpy_dtoh(output, device_output)
