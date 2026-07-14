@@ -48,7 +48,7 @@ __global__ void layerNormFunc(float *output, float *input, float *gamma, float *
     if (index < num_mtx_el)
     {
         int rowIndex  = index/row_size;
-        output[index] = gamma[index] * (input[index] - sharedMean[rowIndex]) * sharedInvVar[rowIndex] + beta[rowIndex];
+        output[index] = gamma[index] * (input[index] - sharedMean[rowIndex]) * sharedInvVar[rowIndex] + beta[index];
     }
 
 }
