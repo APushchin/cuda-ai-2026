@@ -95,8 +95,7 @@ std::vector<float> SoftmaxCUDA(const std::vector<float>& input, int row_count)
         throw std::runtime_error("Failed to register host memory for input");
     }
 
-    std::vector<float> result;
-    result.reserve(elements_number);
+    auto result = std::vector<float>(elements_number);
     const auto output_raw_data = (void*)(result.data());
     error = cudaHostRegister(output_raw_data, size_in_bytes, cudaHostRegisterDefault);
     if (error != cudaSuccess) {
@@ -187,8 +186,7 @@ std::vector<float> SoftmaxReference(const std::vector<float>& input, int row_cou
             input.begin() + i * (row_length + 1)
         );
         auto sum = 0.f;
-        auto exponents = std::vector<float>();
-        exponents.reserve(row_length);
+        auto exponents = std::vector<float>(row_length);
         for (int i = 0; i < row_length; ++i) {
             exponents[i] = std::exp(input[i * row_length + i] - max_value);
             sum += exponents[i];

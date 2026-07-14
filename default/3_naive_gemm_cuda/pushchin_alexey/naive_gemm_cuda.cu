@@ -86,8 +86,7 @@ std::vector<float> NaiveGemmCUDA(
         throw std::runtime_error("Failed to register host memory for input A");
     }
 
-    std::vector<float> result;
-    result.reserve(elements_number);
+    auto result = std::vector<float>(elements_number);
     const auto result_raw_data = (void*)(result.data());
     error = cudaHostRegister(result_raw_data, matrix_size, cudaHostRegisterDefault);
     if (error != cudaSuccess) {

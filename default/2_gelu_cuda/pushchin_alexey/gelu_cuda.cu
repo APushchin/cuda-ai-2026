@@ -61,8 +61,7 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
         throw std::runtime_error("Failed to register host memory for input");
     }
 
-    std::vector<float> result;
-    result.reserve(length);
+    auto output = std::vector<float>(length);
     const auto result_raw_data = (void*)(result.data());
     error = cudaHostRegister(result_raw_data, size_in_bytes, cudaHostRegisterDefault);
     if (error != cudaSuccess) {
@@ -143,8 +142,7 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
 #define RELATIVE_ERROR_THRESHOLD 0.001f
 
 std::vector<float> GeluReference(const std::vector<float>& input) {
-    std::vector<float> output;
-    output.reserve(input.size());
+    auto output = std::vector<float>(input.size());
     std::transform(
         input.begin(),
         input.end(),

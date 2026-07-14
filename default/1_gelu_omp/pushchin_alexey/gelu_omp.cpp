@@ -39,8 +39,7 @@ std::vector<float> GeluOMP(const std::vector<float>& input) {
 std::vector<float> GeluReference(const std::vector<float>& input) {
     // Processing 10000000 numbers 5 times took 2.34033 seconds: mean=0.468066s, min=0.465243s
 
-    std::vector<float> output;
-    output.reserve(input.size());
+    auto output = std::vector<float>(input.size());
     std::transform(
         input.begin(),
         input.end(),
@@ -62,8 +61,7 @@ std::vector<float> GeluConstsFactoredOut(const std::vector<float>& input) {
     constexpr float SQRT_2_OVER_PI = 0.7978845608f; // std::sqrt(2.0f / M_PI)
     constexpr float COEFFICIENT = 0.044715f;
 
-    std::vector<float> output;
-    output.reserve(input.size());
+    auto output = std::vector<float>(input.size());
     std::transform(
         input.begin(),
         input.end(),
@@ -81,9 +79,7 @@ std::vector<float> GeluWithTanhViaExp(const std::vector<float>& input) {
     constexpr float SQRT_2_OVER_PI = 0.7978845608f; // std::sqrt(2.0f / M_PI)
     constexpr float COEFFICIENT = 0.044715f;
 
-    std::vector<float> output;
-    output.reserve(input.size());
-
+    auto output = std::vector<float>(input.size());
     std::transform(
         input.begin(),
         input.end(),
