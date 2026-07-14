@@ -2,46 +2,69 @@
 
 #include <cuda_runtime.h>
 #include <cuda/cmath>
+#include <stdio.h>
 
-__global__ void softMaxFunc(const float* input, float* output, int rowCount, int colCount, int numEl)
+__global__ void softMaxFunc(const float* input, float* output, int colCount)
 {
     extern __shared__ float sharedMem[];
     float* sharedMaxSum = sharedMem; 
-    float* sharedExp  = &sharedMem[rowCount];
+    float* sharedExp  = &sharedMem[blockDim.x];
 
-    int index = threadIdx.x + blockIdx.x * blockDim.x;
-    if (index < rowCount)
+    int rowIndex    = blockIdx.x; 
+    int threadIndex = threadIdx.x;
+    int elStart     = rowIndex * colCount;
+
+    float localMax = -INFINITY;
+    for (int iCol = threadIndex; iCol < colCount; iCol += blockDim.x) 
     {
-        const int elStart = index*colCount;
-        sharedMaxSum[index] = -INFINITY;
-        for (int iCol = 0; iCol < colCount; ++iCol)
-            if (sharedMaxSum[index] < input[elStart + iCol])
-                sharedMaxSum[index] = input[elStart + iCol];
+        if (input[elStart + iCol] > localMax)
+        {
+            localMax = input[elStart + iCol];
+        }
     }
-
-    __syncthreads();
-    
-    if (index < numEl)
-    {
-        sharedExp[index] = cuda::std::expf(input[index] - sharedMaxSum[index/colCount]);
-    }
-
+    sharedMaxSum[threadIndex] = localMax;
     __syncthreads();
 
-    if (index < rowCount)
+    __shared__ float rowMax;
+    if (threadIndex == 0)
     {
-        const int elStart = index*colCount;
-        sharedMaxSum[index] = 0;
-        for (int iCol = 0; iCol < colCount; ++iCol)
-            sharedMaxSum[index] += sharedExp[elStart + iCol];
+        rowMax = sharedMaxSum[0];
+        for (int iCol = 1; iCol < blockDim.x; ++iCol) 
+        {
+            if (sharedMaxSum[iCol] > rowMax)
+                rowMax = sharedMaxSum[iCol];
+        }
     }
-
     __syncthreads();
 
-
-    if (index < numEl)
+    for (int iCol = threadIndex; iCol < colCount; iCol += blockDim.x) 
     {
-        output[index] = sharedExp[index] / sharedMaxSum[index/colCount];
+        sharedExp[iCol] = cuda::std::expf(input[elStart + iCol] - rowMax);
+    }
+    __syncthreads();
+
+    float localSum = 0.0f;
+    for (int iCol = threadIndex; iCol < colCount; iCol += blockDim.x) 
+    {
+        localSum += expf(sharedExp[iCol] - rowMax);
+    }
+    sharedMaxSum[threadIndex] = localSum;
+    __syncthreads();
+
+    __shared__ float rowExpSum;
+    if (threadIndex == 0)
+    {
+        rowExpSum = 0;
+        for (int iCol = 0; iCol < blockDim.x; ++iCol) 
+        {
+            rowExpSum += sharedMaxSum[iCol];
+        }
+    }
+    __syncthreads();
+
+    for (int iCol = threadIndex; iCol < colCount; iCol += blockDim.x) 
+    {
+        output[elStart + iCol] = expf(sharedExp[iCol] - rowMax) / rowExpSum;
     }
 
 }
@@ -59,10 +82,10 @@ std::vector<float> SoftmaxCUDA(const std::vector<float>& input, int rowCount)
     float *deviceOutput = nullptr;
     cudaMalloc(&deviceOutput, bitMtxNumEl);
 
-    const int numThreads = rowCount;
-    int numBlocks = (static_cast<int>(mtxNumEl) + numThreads - 1) / numThreads;
-    size_t sharedMemSize = (rowCount + mtxNumEl) * sizeof(float);
-    softMaxFunc<<<numBlocks, numThreads, sharedMemSize>>>(deviceInput, deviceOutput, rowCount, colCount, mtxNumEl);
+    const int numThreads = min(256, colCount);
+    int numBlocks = rowCount;
+    size_t sharedMemSize = (numThreads + colCount) * sizeof(float);
+    softMaxFunc<<<numBlocks, numThreads, sharedMemSize>>>(deviceInput, deviceOutput, colCount);
     
     cudaDeviceSynchronize();
 
