@@ -39,14 +39,14 @@ __global__ void softMaxFunc(const float* input, float* output, int colCount)
 
     for (int iCol = threadIndex; iCol < colCount; iCol += blockDim.x) 
     {
-        sharedExp[iCol] = cuda::std::expf(input[elStart + iCol] - rowMax);
+        sharedExp[iCol] = expf(input[elStart + iCol] - rowMax);
     }
     __syncthreads();
 
     float localSum = 0.0f;
     for (int iCol = threadIndex; iCol < colCount; iCol += blockDim.x) 
     {
-        localSum += expf(sharedExp[iCol] - rowMax);
+        localSum += sharedExp[iCol];
     }
     sharedMaxSum[threadIndex] = localSum;
     __syncthreads();
@@ -64,7 +64,7 @@ __global__ void softMaxFunc(const float* input, float* output, int colCount)
 
     for (int iCol = threadIndex; iCol < colCount; iCol += blockDim.x) 
     {
-        output[elStart + iCol] = expf(sharedExp[iCol] - rowMax) / rowExpSum;
+        output[elStart + iCol] = sharedExp[iCol] / rowExpSum;
     }
 
 }
