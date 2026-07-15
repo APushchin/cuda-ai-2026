@@ -6,52 +6,55 @@ import numpy as np
 kernel_code = """
 __global__ void layerNormFunc(float *output, float *input, float *gamma, float *beta, int row_size, int col_size, int num_mtx_el, float eps)
 {
-    extern __shared__ float sharedMemory[];
+    extern __shared__ float shared_mem[]; 
 
-    float* sharedMean   = sharedMemory;
-    float* sharedInvVar = &sharedMemory[col_size];
+    int row_index = blockIdx.x; 
+    int thread_index = threadIdx.x;
 
-    int index = threadIdx.x + blockIdx.x * blockDim.x;
-
-    if (index < col_size)
+    float thread_sum = 0.0f;
+    for (int i_el = thread_index; i_el < row_size; i_el += blockDim.x) 
     {
-        const int elStart = index * row_size;
-        sharedMean[index] = 0;
-        for (int iRowEl = 0; iRowEl < row_size; ++iRowEl)
-            sharedMean[index] += input[elStart + iRowEl];
-        sharedMean[index] /= row_size;
+        thread_sum += input[row_index * row_size + i_el];
     }
+    shared_mem[thread_index] = thread_sum;
+    __syncthreads();
+    
+    __shared__ float row_mean;
+    if (thread_index == 0) 
+    {   
+        row_mean = 0;
+        for (int i_thread = 0; i_thread < blockDim.x; ++i_thread)
+            row_mean += shared_mem[i_thread];
 
-    if (index >= col_size && index < 2*col_size)
-    {
-        sharedInvVar[index - col_size] = 0;
+        row_mean /= row_size;
     }
-
     __syncthreads();
 
-    if (index < num_mtx_el)
+    float thread_var_sum = 0.0f;
+    for (int i_el = thread_index; i_el < row_size; i_el += blockDim.x) 
     {
-        int indexNeed = index/row_size;
-        float diff = input[index] - sharedMean[indexNeed];
-        sharedInvVar[indexNeed] += diff*diff;
+        float diff = input[row_index * row_size + i_el] - row_mean;
+        thread_var_sum += diff * diff;
     }
-
+    shared_mem[thread_index] = thread_var_sum;
     __syncthreads();
 
-    if (index < col_size)
+    __shared__ float row_inv_std;
+    if (thread_index == 0) 
     {
-        const int elStart = index * row_size;
-        sharedInvVar[index] /= row_size;
-        sharedInvVar[index] = 1 / rsqrtf(sharedInvVar[index] + eps);
-    }
+        float variance = 0;
+        for (int i_thread = 0; i_thread < blockDim.x; ++i_thread)
+            variance += shared_mem[i_thread];
+        variance /= row_size;
 
+        row_inv_std = rsqrtf(variance + eps);
+    }
     __syncthreads();
 
-    if (index < num_mtx_el)
+    for (int i = thread_index; i < row_size; i += blockDim.x) 
     {
-        int rowIndex  = index/row_size;
-        int colIndex  = index%row_size;
-        output[index] = gamma[colIndex] * (input[index] - sharedMean[rowIndex]) * sharedInvVar[rowIndex] + beta[colIndex];
+        int global_idx = row_index * row_size + i;
+        output[global_idx] = gamma[i] * (input[global_idx] - row_mean) * row_inv_std + beta[i];
     }
 
 }
@@ -94,9 +97,9 @@ def layernorm_pycuda(input, gamma, beta, row_size, eps=1e-5):
 
     col_size = input.size / row_size
 
-    threads_per_block = 256
-    blocks_per_grid = (input.size + threads_per_block - 1) // threads_per_block
-    shared_mem_size = int(2*col_size*4)
+    threads_per_block = int(min(256, row_size))
+    blocks_per_grid = int(col_size)
+    shared_mem_size = int(threads_per_block * 4)
 
     layernorm_kernel(
         device_output, device_input, device_gamma, device_beta, 
