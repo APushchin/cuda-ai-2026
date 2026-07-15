@@ -1,5 +1,0 @@
-/home/crazyproger/sandbox/cuda-ai-2026/default/2_gelu_cuda/pushchin_alexey/gelu_cuda.cu(65): error: identifier "result" is undefined
-      const auto result_raw_data = (void*)(result.data());
-                                           ^
-
-1 error detected in the compilation of "/home/crazyproger/sandbox/cuda-ai-2026/default/2_gelu_cuda/pushchin_alexey/gelu_cuda.cu".

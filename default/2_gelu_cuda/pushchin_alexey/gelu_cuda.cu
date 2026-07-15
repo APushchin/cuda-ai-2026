@@ -61,7 +61,7 @@ std::vector<float> GeluCUDA(const std::vector<float>& input) {
         throw std::runtime_error("Failed to register host memory for input");
     }
 
-    auto output = std::vector<float>(length);
+    auto result = std::vector<float>(length);
     const auto result_raw_data = (void*)(result.data());
     error = cudaHostRegister(result_raw_data, size_in_bytes, cudaHostRegisterDefault);
     if (error != cudaSuccess) {
